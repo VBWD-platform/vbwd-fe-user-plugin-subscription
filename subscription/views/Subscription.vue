@@ -534,12 +534,9 @@ function viewInvoice(invoice: Invoice): void {
 
 async function downloadInvoice(invoiceId: string): Promise<void> {
   try {
-    const result = await invoicesStore.downloadInvoice(invoiceId);
-    if (result?.downloadUrl) {
-      window.open(result.downloadUrl, '_blank');
-    } else {
-      showSuccess(t('subscription.messages.invoiceDownloadInitiated'));
-    }
+    const invoice = invoicesStore.getInvoiceById(invoiceId);
+    await invoicesStore.downloadInvoice(invoiceId, invoice?.invoice_number);
+    showSuccess(t('subscription.messages.invoiceDownloadInitiated'));
   } catch (err) {
     error.value = (err as Error).message || t('subscription.errors.failedToDownload');
   }
