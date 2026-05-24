@@ -1,0 +1,146 @@
+{
+  "subscription": {
+    "title": "Подписка",
+    "loading": "Загрузка подписки...",
+    "currentPlan": {
+      "title": "Текущий Тариф",
+      "noPlan": "Нет Тарифа",
+      "noActiveSubscription": "У вас нет активной подписки.",
+      "price": "Цена",
+      "currentPeriod": "Текущий Период",
+      "nextBillingDate": "Дата Следующей Оплаты"
+    },
+    "tokenBalance": {
+      "title": "Баланс Токенов",
+      "description": "Используйте токены для API вызовов, функций и многого другого.",
+      "purchaseTokens": "Купить Токены"
+    },
+    "manage": {
+      "title": "Управлять Подпиской",
+      "changePlan": "Изменить Тариф",
+      "cancelSubscription": "Отменить Подписку"
+    },
+    "invoices": {
+      "title": "Счета",
+      "searchPlaceholder": "Поиск счетов...",
+      "tableHeaders": {
+        "invoiceNumber": "Счет #",
+        "date": "Дата",
+        "amount": "Сумма",
+        "status": "Статус",
+        "actions": "Действия"
+      },
+      "noInvoices": "Счетов нет.",
+      "noInvoicesSearch": "Счетов, соответствующих вашему поиску, не найдено.",
+      "downloadPdf": "Скачать PDF"
+    },
+    "cancelModal": {
+      "title": "Отменить Подписку",
+      "confirmMessage": "Вы уверены, что хотите отменить вашу подписку?",
+      "accessWarning": "Ваш доступ продолжится до {date}.",
+      "keepSubscription": "Оставить Подписку",
+      "cancelling": "Отмена...",
+      "confirmCancellation": "Подтвердить Отмену"
+    },
+    "invoiceModal": {
+      "date": "Дата",
+      "status": "Статус",
+      "amount": "Сумма"
+    },
+    "messages": {
+      "subscriptionCancelled": "Подписка успешно отменена",
+      "invoiceDownloadInitiated": "Загрузка счета начата"
+    },
+    "errors": {
+      "failedToLoad": "Ошибка загрузки данных подписки",
+      "failedToCancel": "Ошибка отмены подписки",
+      "failedToDownload": "Ошибка загрузки счета"
+    }
+  },
+  "plans": {
+    "title": "Выберите Тариф",
+    "loading": "Загрузка тарифов...",
+    "noPlans": "На данный момент тарифы недоступны.",
+    "mostPopular": "Самый Популярный",
+    "currentPlan": "Текущий Тариф",
+    "selectPlan": "Выбрать план",
+    "processing": "Обработка...",
+    "taxIncluded": "с налогом {rate}%",
+    "currencyLabel": "Показывать цены в:",
+    "tableHeaders": {
+      "name": "Название",
+      "price": "Цена",
+      "billingPeriod": "Биллинг",
+      "status": "Статус",
+      "actions": "Действия"
+    }
+  },
+  "addons": {
+    "breadcrumbPlans": "Тарифы",
+    "breadcrumbAddons": "Дополнения",
+    "title": "Дополнения",
+    "subtitle": "Улучшите вашу подписку дополнительными функциями",
+    "loading": "Загрузка дополнений...",
+    "subscriptionAddons": {
+      "title": "Дополнения к Подписке",
+      "description": "Эти дополнения требуют активной подписки и будут выставлены счетом вместе с вашим тарифом.",
+      "noAddons": "Дополнения к подписке недоступны."
+    },
+    "globalAddons": {
+      "title": "Глобальные Дополнения",
+      "description": "Эти дополнения доступны всем пользователям и применяются ко всему вашему аккаунту.",
+      "noAddons": "Глобальные дополнения недоступны."
+    },
+    "addToCart": "Добавить в Корзину",
+    "requiresSubscription": "Требует Подписки",
+    "backToPlans": "Вернуться к Тарифам",
+    "errors": {
+      "failedToLoad": "Ошибка загрузки дополнений"
+    },
+    "detail": {
+      "title": "Детали Дополнения",
+      "status": "Статус",
+      "startDate": "Дата Начала",
+      "expiryDate": "Дата Истечения",
+      "cancelledDate": "Дата Отмены",
+      "price": "Цена",
+      "billingPeriod": "Период Оплаты",
+      "invoice": "Счет",
+      "cancelAddon": "Отменить Дополнение",
+      "cancelConfirm": "Вы уверены, что хотите отменить это дополнение?",
+      "cancelSuccess": "Дополнение успешно отменено.",
+      "backToDashboard": "Вернуться на Главную",
+      "alreadyCancelled": "Это дополнение было отменено."
+    }
+  },
+  "addonInfo": {
+    "title": "Детали Дополнения",
+    "loading": "Загрузка деталей дополнения...",
+    "error": "Ошибка загрузки деталей дополнения.",
+    "backLink": "Назад",
+    "name": "Название",
+    "price": "Цена",
+    "currency": "Валюта",
+    "billingPeriod": "Период Оплаты",
+    "description": "Описание"
+  },
+  "planDetail": {
+    "title": "Детали Тарифа",
+    "loading": "Загрузка деталей тарифа...",
+    "error": "Ошибка загрузки деталей тарифа.",
+    "backLink": "Назад",
+    "name": "Название",
+    "price": "Цена",
+    "billingPeriod": "Период Оплаты",
+    "description": "Описание",
+    "features": "Особенности",
+    "status": "Статус",
+    "active": "Активен",
+    "archived": "Архивирован"
+  },
+  "nav": {
+    "subscription": "Подписка",
+    "plans": "Тарифы",
+    "addons": "Дополнения"
+  }
+}

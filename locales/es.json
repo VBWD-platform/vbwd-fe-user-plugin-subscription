@@ -1,0 +1,146 @@
+{
+  "subscription": {
+    "title": "Suscripción",
+    "loading": "Cargando suscripción...",
+    "currentPlan": {
+      "title": "Plan Actual",
+      "noPlan": "Sin Plan",
+      "noActiveSubscription": "No tiene una suscripción activa.",
+      "price": "Precio",
+      "currentPeriod": "Período Actual",
+      "nextBillingDate": "Próxima Fecha de Facturación"
+    },
+    "tokenBalance": {
+      "title": "Saldo de Tokens",
+      "description": "Utilice tokens para llamadas API, características y más.",
+      "purchaseTokens": "Comprar Tokens"
+    },
+    "manage": {
+      "title": "Gestionar Suscripción",
+      "changePlan": "Cambiar Plan",
+      "cancelSubscription": "Cancelar Suscripción"
+    },
+    "invoices": {
+      "title": "Facturas",
+      "searchPlaceholder": "Buscar facturas...",
+      "tableHeaders": {
+        "invoiceNumber": "Factura #",
+        "date": "Fecha",
+        "amount": "Monto",
+        "status": "Estado",
+        "actions": "Acciones"
+      },
+      "noInvoices": "Sin facturas.",
+      "noInvoicesSearch": "No se encontraron facturas que coincidan con su búsqueda.",
+      "downloadPdf": "Descargar PDF"
+    },
+    "cancelModal": {
+      "title": "Cancelar Suscripción",
+      "confirmMessage": "¿Está seguro de que desea cancelar su suscripción?",
+      "accessWarning": "Su acceso continuará hasta {date}.",
+      "keepSubscription": "Mantener Suscripción",
+      "cancelling": "Cancelando...",
+      "confirmCancellation": "Confirmar Cancelación"
+    },
+    "invoiceModal": {
+      "date": "Fecha",
+      "status": "Estado",
+      "amount": "Monto"
+    },
+    "messages": {
+      "subscriptionCancelled": "Suscripción cancelada correctamente",
+      "invoiceDownloadInitiated": "Descarga de factura iniciada"
+    },
+    "errors": {
+      "failedToLoad": "Error al cargar datos de suscripción",
+      "failedToCancel": "Error al cancelar suscripción",
+      "failedToDownload": "Error al descargar factura"
+    }
+  },
+  "plans": {
+    "title": "Seleccionar un Plan",
+    "loading": "Cargando planes...",
+    "noPlans": "No hay planes disponibles en este momento.",
+    "mostPopular": "Más Popular",
+    "currentPlan": "Plan Actual",
+    "selectPlan": "Seleccionar plan",
+    "processing": "Procesando...",
+    "taxIncluded": "incl. {rate}% impuesto",
+    "currencyLabel": "Mostrar precios en:",
+    "tableHeaders": {
+      "name": "Nombre",
+      "price": "Precio",
+      "billingPeriod": "Facturación",
+      "status": "Estado",
+      "actions": "Acciones"
+    }
+  },
+  "addons": {
+    "breadcrumbPlans": "Planes",
+    "breadcrumbAddons": "Complementos",
+    "title": "Complementos",
+    "subtitle": "Mejore su suscripción con características adicionales",
+    "loading": "Cargando complementos...",
+    "subscriptionAddons": {
+      "title": "Complementos de Suscripción",
+      "description": "Estos complementos requieren una suscripción activa y se facturarán junto con su plan.",
+      "noAddons": "Sin complementos de suscripción disponibles."
+    },
+    "globalAddons": {
+      "title": "Complementos Globales",
+      "description": "Estos complementos están disponibles para todos los usuarios y se aplican a toda su cuenta.",
+      "noAddons": "Sin complementos globales disponibles."
+    },
+    "addToCart": "Añadir al Carrito",
+    "requiresSubscription": "Requiere Suscripción",
+    "backToPlans": "Volver a Planes",
+    "errors": {
+      "failedToLoad": "Error al cargar complementos"
+    },
+    "detail": {
+      "title": "Detalles del Complemento",
+      "status": "Estado",
+      "startDate": "Fecha de Inicio",
+      "expiryDate": "Fecha de Vencimiento",
+      "cancelledDate": "Fecha de Cancelación",
+      "price": "Precio",
+      "billingPeriod": "Período de Facturación",
+      "invoice": "Factura",
+      "cancelAddon": "Cancelar Complemento",
+      "cancelConfirm": "¿Está seguro de que desea cancelar este complemento?",
+      "cancelSuccess": "Complemento cancelado correctamente.",
+      "backToDashboard": "Volver al Panel",
+      "alreadyCancelled": "Este complemento ha sido cancelado."
+    }
+  },
+  "addonInfo": {
+    "title": "Detalles del Complemento",
+    "loading": "Cargando detalles del complemento...",
+    "error": "Error al cargar detalles del complemento.",
+    "backLink": "Volver",
+    "name": "Nombre",
+    "price": "Precio",
+    "currency": "Moneda",
+    "billingPeriod": "Período de Facturación",
+    "description": "Descripción"
+  },
+  "planDetail": {
+    "title": "Detalles del Plan",
+    "loading": "Cargando detalles del plan...",
+    "error": "Error al cargar detalles del plan.",
+    "backLink": "Volver",
+    "name": "Nombre",
+    "price": "Precio",
+    "billingPeriod": "Período de Facturación",
+    "description": "Descripción",
+    "features": "Características",
+    "status": "Estado",
+    "active": "Activo",
+    "archived": "Archivado"
+  },
+  "nav": {
+    "subscription": "Suscripción",
+    "plans": "Planes",
+    "addons": "Complementos"
+  }
+}

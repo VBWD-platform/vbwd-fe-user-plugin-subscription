@@ -1,0 +1,146 @@
+{
+  "subscription": {
+    "title": "订阅",
+    "loading": "加载订阅中...",
+    "currentPlan": {
+      "title": "当前计划",
+      "noPlan": "无计划",
+      "noActiveSubscription": "您没有活跃的订阅。",
+      "price": "价格",
+      "currentPeriod": "当前周期",
+      "nextBillingDate": "下次计费日期"
+    },
+    "tokenBalance": {
+      "title": "代币余额",
+      "description": "使用代币进行 API 调用、功能等。",
+      "purchaseTokens": "购买代币"
+    },
+    "manage": {
+      "title": "管理订阅",
+      "changePlan": "更改计划",
+      "cancelSubscription": "取消订阅"
+    },
+    "invoices": {
+      "title": "发票",
+      "searchPlaceholder": "搜索发票...",
+      "tableHeaders": {
+        "invoiceNumber": "发票 #",
+        "date": "日期",
+        "amount": "金额",
+        "status": "状态",
+        "actions": "操作"
+      },
+      "noInvoices": "无发票。",
+      "noInvoicesSearch": "找不到与您的搜索匹配的发票。",
+      "downloadPdf": "下载 PDF"
+    },
+    "cancelModal": {
+      "title": "取消订阅",
+      "confirmMessage": "确定要取消订阅吗？",
+      "accessWarning": "您的访问权限将继续到 {date}。",
+      "keepSubscription": "保持订阅",
+      "cancelling": "取消中...",
+      "confirmCancellation": "确认取消"
+    },
+    "invoiceModal": {
+      "date": "日期",
+      "status": "状态",
+      "amount": "金额"
+    },
+    "messages": {
+      "subscriptionCancelled": "订阅已成功取消",
+      "invoiceDownloadInitiated": "发票下载已启动"
+    },
+    "errors": {
+      "failedToLoad": "加载订阅数据失败",
+      "failedToCancel": "取消订阅失败",
+      "failedToDownload": "下载发票失败"
+    }
+  },
+  "plans": {
+    "title": "选择计划",
+    "loading": "加载计划中...",
+    "noPlans": "目前没有可用的计划。",
+    "mostPopular": "最受欢迎",
+    "currentPlan": "当前计划",
+    "selectPlan": "选择方案",
+    "processing": "处理中...",
+    "taxIncluded": "含 {rate}% 税",
+    "currencyLabel": "显示价格为：",
+    "tableHeaders": {
+      "name": "名称",
+      "price": "价格",
+      "billingPeriod": "计费",
+      "status": "状态",
+      "actions": "操作"
+    }
+  },
+  "addons": {
+    "breadcrumbPlans": "计划",
+    "breadcrumbAddons": "附加组件",
+    "title": "附加组件",
+    "subtitle": "使用额外功能增强您的订阅",
+    "loading": "加载附加组件中...",
+    "subscriptionAddons": {
+      "title": "订阅附加组件",
+      "description": "这些附加组件需要活跃订阅，并将随您的计划一起计费。",
+      "noAddons": "没有可用的订阅附加组件。"
+    },
+    "globalAddons": {
+      "title": "全局附加组件",
+      "description": "这些附加组件对所有用户都可用，适用于您的整个账户。",
+      "noAddons": "没有可用的全局附加组件。"
+    },
+    "addToCart": "加入购物车",
+    "requiresSubscription": "需要订阅",
+    "backToPlans": "返回计划",
+    "errors": {
+      "failedToLoad": "加载附加组件失败"
+    },
+    "detail": {
+      "title": "附加组件详情",
+      "status": "状态",
+      "startDate": "开始日期",
+      "expiryDate": "过期日期",
+      "cancelledDate": "取消日期",
+      "price": "价格",
+      "billingPeriod": "计费周期",
+      "invoice": "发票",
+      "cancelAddon": "取消附加组件",
+      "cancelConfirm": "确定要取消此附加组件吗？",
+      "cancelSuccess": "附加组件已成功取消。",
+      "backToDashboard": "返回仪表板",
+      "alreadyCancelled": "此附加组件已被取消。"
+    }
+  },
+  "addonInfo": {
+    "title": "附加组件详情",
+    "loading": "加载附加组件详情中...",
+    "error": "加载附加组件详情失败。",
+    "backLink": "返回",
+    "name": "名称",
+    "price": "价格",
+    "currency": "货币",
+    "billingPeriod": "计费周期",
+    "description": "描述"
+  },
+  "planDetail": {
+    "title": "计划详情",
+    "loading": "加载计划详情中...",
+    "error": "加载计划详情失败。",
+    "backLink": "返回",
+    "name": "名称",
+    "price": "价格",
+    "billingPeriod": "计费周期",
+    "description": "描述",
+    "features": "功能",
+    "status": "状态",
+    "active": "活跃",
+    "archived": "已归档"
+  },
+  "nav": {
+    "subscription": "订阅",
+    "plans": "计划",
+    "addons": "附加组件"
+  }
+}

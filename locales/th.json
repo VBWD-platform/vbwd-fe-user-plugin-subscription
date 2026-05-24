@@ -1,0 +1,146 @@
+{
+  "subscription": {
+    "title": "การสมัครสมาชิก",
+    "loading": "กำลังโหลดการสมัครสมาชิก...",
+    "currentPlan": {
+      "title": "แผนปัจจุบัน",
+      "noPlan": "ไม่มีแผน",
+      "noActiveSubscription": "คุณไม่มีการสมัครสมาชิกที่ใช้งาน",
+      "price": "ราคา",
+      "currentPeriod": "รอบเวลาปัจจุบัน",
+      "nextBillingDate": "วันเรียกเก็บเงินครั้งต่อไป"
+    },
+    "tokenBalance": {
+      "title": "ยอดโทเค็น",
+      "description": "ใช้โทเค็นสำหรับการเรียกใช้ API คุณสมบัติ และอื่นๆ",
+      "purchaseTokens": "ซื้อโทเค็น"
+    },
+    "manage": {
+      "title": "จัดการการสมัครสมาชิก",
+      "changePlan": "เปลี่ยนแผน",
+      "cancelSubscription": "ยกเลิกการสมัครสมาชิก"
+    },
+    "invoices": {
+      "title": "ใบแจ้งหนี้",
+      "searchPlaceholder": "ค้นหาใบแจ้งหนี้...",
+      "tableHeaders": {
+        "invoiceNumber": "ใบแจ้งหนี้ #",
+        "date": "วันที่",
+        "amount": "จำนวนเงิน",
+        "status": "สถานะ",
+        "actions": "การดำเนินการ"
+      },
+      "noInvoices": "ไม่มีใบแจ้งหนี้",
+      "noInvoicesSearch": "ไม่พบใบแจ้งหนี้ที่ตรงกับการค้นหาของคุณ",
+      "downloadPdf": "ดาวน์โหลด PDF"
+    },
+    "cancelModal": {
+      "title": "ยกเลิกการสมัครสมาชิก",
+      "confirmMessage": "คุณแน่ใจหรือไม่ว่าต้องการยกเลิกการสมัครสมาชิก?",
+      "accessWarning": "การเข้าถึงของคุณจะดำเนินต่อไปจนถึง {date}",
+      "keepSubscription": "เก็บการสมัครสมาชิก",
+      "cancelling": "กำลังยกเลิก...",
+      "confirmCancellation": "ยืนยันการยกเลิก"
+    },
+    "invoiceModal": {
+      "date": "วันที่",
+      "status": "สถานะ",
+      "amount": "จำนวนเงิน"
+    },
+    "messages": {
+      "subscriptionCancelled": "การสมัครสมาชิกยกเลิกเรียบร้อยแล้ว",
+      "invoiceDownloadInitiated": "เริ่มดาวน์โหลดใบแจ้งหนี้"
+    },
+    "errors": {
+      "failedToLoad": "ไม่สามารถโหลดข้อมูลการสมัครสมาชิก",
+      "failedToCancel": "ไม่สามารถยกเลิกการสมัครสมาชิก",
+      "failedToDownload": "ไม่สามารถดาวน์โหลดใบแจ้งหนี้"
+    }
+  },
+  "plans": {
+    "title": "เลือกแผน",
+    "loading": "กำลังโหลดแผน...",
+    "noPlans": "ไม่มีแผนที่ใช้งานได้ในขณะนี้",
+    "mostPopular": "ได้รับความนิยมมากที่สุด",
+    "currentPlan": "แผนปัจจุบัน",
+    "selectPlan": "เลือกแผน",
+    "processing": "กำลังประมวลผล...",
+    "taxIncluded": "รวมภาษี {rate}%",
+    "currencyLabel": "แสดงราคาใน:",
+    "tableHeaders": {
+      "name": "ชื่อ",
+      "price": "ราคา",
+      "billingPeriod": "การเรียกเก็บ",
+      "status": "สถานะ",
+      "actions": "การดำเนินการ"
+    }
+  },
+  "addons": {
+    "breadcrumbPlans": "แผน",
+    "breadcrumbAddons": "ส่วนเสริม",
+    "title": "ส่วนเสริม",
+    "subtitle": "ปรับปรุงการสมัครสมาชิกของคุณด้วยคุณสมบัติเพิ่มเติม",
+    "loading": "กำลังโหลดส่วนเสริม...",
+    "subscriptionAddons": {
+      "title": "ส่วนเสริมการสมัครสมาชิก",
+      "description": "ส่วนเสริมเหล่านี้ต้องมีการสมัครสมาชิกที่ใช้งาน และจะถูกเรียกเก็บเงินพร้อมกับแผนของคุณ",
+      "noAddons": "ไม่มีส่วนเสริมการสมัครสมาชิก"
+    },
+    "globalAddons": {
+      "title": "ส่วนเสริมระดับโลก",
+      "description": "ส่วนเสริมเหล่านี้ใช้ได้สำหรับผู้ใช้ทั้งหมด และนำไปใช้กับบัญชีทั้งหมดของคุณ",
+      "noAddons": "ไม่มีส่วนเสริมระดับโลก"
+    },
+    "addToCart": "เพิ่มไปยังตะกร้า",
+    "requiresSubscription": "ต้องมีการสมัครสมาชิก",
+    "backToPlans": "กลับไปยังแผน",
+    "errors": {
+      "failedToLoad": "ไม่สามารถโหลดส่วนเสริม"
+    },
+    "detail": {
+      "title": "รายละเอียดส่วนเสริม",
+      "status": "สถานะ",
+      "startDate": "วันที่เริ่มต้น",
+      "expiryDate": "วันที่หมดอายุ",
+      "cancelledDate": "วันที่ยกเลิก",
+      "price": "ราคา",
+      "billingPeriod": "รอบการเรียกเก็บเงิน",
+      "invoice": "ใบแจ้งหนี้",
+      "cancelAddon": "ยกเลิกส่วนเสริม",
+      "cancelConfirm": "คุณแน่ใจหรือไม่ว่าต้องการยกเลิกส่วนเสริมนี้?",
+      "cancelSuccess": "ส่วนเสริมยกเลิกเรียบร้อยแล้ว",
+      "backToDashboard": "กลับไปยังแดชบอร์ด",
+      "alreadyCancelled": "ส่วนเสริมนี้ได้ถูกยกเลิกแล้ว"
+    }
+  },
+  "addonInfo": {
+    "title": "รายละเอียดส่วนเสริม",
+    "loading": "กำลังโหลดรายละเอียดส่วนเสริม...",
+    "error": "ไม่สามารถโหลดรายละเอียดส่วนเสริม",
+    "backLink": "กลับ",
+    "name": "ชื่อ",
+    "price": "ราคา",
+    "currency": "สกุลเงิน",
+    "billingPeriod": "รอบการเรียกเก็บเงิน",
+    "description": "คำอธิบาย"
+  },
+  "planDetail": {
+    "title": "รายละเอียดแผน",
+    "loading": "กำลังโหลดรายละเอียดแผน...",
+    "error": "ไม่สามารถโหลดรายละเอียดแผน",
+    "backLink": "กลับ",
+    "name": "ชื่อ",
+    "price": "ราคา",
+    "billingPeriod": "รอบการเรียกเก็บเงิน",
+    "description": "คำอธิบาย",
+    "features": "คุณสมบัติ",
+    "status": "สถานะ",
+    "active": "ใช้งาน",
+    "archived": "เก็บถาวร"
+  },
+  "nav": {
+    "subscription": "การสมัครสมาชิก",
+    "plans": "แผน",
+    "addons": "ส่วนเสริม"
+  }
+}

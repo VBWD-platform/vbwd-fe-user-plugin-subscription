@@ -1,0 +1,146 @@
+{
+  "subscription": {
+    "title": "サブスクリプション",
+    "loading": "サブスクリプションを読み込み中...",
+    "currentPlan": {
+      "title": "現在のプラン",
+      "noPlan": "プランなし",
+      "noActiveSubscription": "アクティブなサブスクリプションがありません。",
+      "price": "価格",
+      "currentPeriod": "現在の期間",
+      "nextBillingDate": "次の請求日"
+    },
+    "tokenBalance": {
+      "title": "トークン残高",
+      "description": "トークンをAPI呼び出し、機能などに使用します。",
+      "purchaseTokens": "トークンを購入"
+    },
+    "manage": {
+      "title": "サブスクリプションを管理",
+      "changePlan": "プランを変更",
+      "cancelSubscription": "サブスクリプションをキャンセル"
+    },
+    "invoices": {
+      "title": "請求書",
+      "searchPlaceholder": "請求書を検索...",
+      "tableHeaders": {
+        "invoiceNumber": "請求書 #",
+        "date": "日付",
+        "amount": "金額",
+        "status": "ステータス",
+        "actions": "アクション"
+      },
+      "noInvoices": "請求書なし。",
+      "noInvoicesSearch": "検索に一致する請求書が見つかりません。",
+      "downloadPdf": "PDFをダウンロード"
+    },
+    "cancelModal": {
+      "title": "サブスクリプションをキャンセル",
+      "confirmMessage": "本当にサブスクリプションをキャンセルしますか？",
+      "accessWarning": "アクセスは{date}まで継続します。",
+      "keepSubscription": "サブスクリプションを保持",
+      "cancelling": "キャンセル中...",
+      "confirmCancellation": "キャンセルを確認"
+    },
+    "invoiceModal": {
+      "date": "日付",
+      "status": "ステータス",
+      "amount": "金額"
+    },
+    "messages": {
+      "subscriptionCancelled": "サブスクリプションが正常にキャンセルされました",
+      "invoiceDownloadInitiated": "請求書のダウンロードが開始されました"
+    },
+    "errors": {
+      "failedToLoad": "サブスクリプションデータの読み込みに失敗しました",
+      "failedToCancel": "サブスクリプションのキャンセルに失敗しました",
+      "failedToDownload": "請求書のダウンロードに失敗しました"
+    }
+  },
+  "plans": {
+    "title": "プランを選択",
+    "loading": "プランを読み込み中...",
+    "noPlans": "現在、利用可能なプランはありません。",
+    "mostPopular": "最も人気",
+    "currentPlan": "現在のプラン",
+    "selectPlan": "プランを選択",
+    "processing": "処理中...",
+    "taxIncluded": "{rate}%税金を含む",
+    "currencyLabel": "価格を表示：",
+    "tableHeaders": {
+      "name": "名前",
+      "price": "価格",
+      "billingPeriod": "請求",
+      "status": "ステータス",
+      "actions": "操作"
+    }
+  },
+  "addons": {
+    "breadcrumbPlans": "プラン",
+    "breadcrumbAddons": "アドオン",
+    "title": "アドオン",
+    "subtitle": "追加機能でサブスクリプションを強化",
+    "loading": "アドオンを読み込み中...",
+    "subscriptionAddons": {
+      "title": "サブスクリプションアドオン",
+      "description": "これらのアドオンはアクティブなサブスクリプションが必要で、プランと一緒に請求されます。",
+      "noAddons": "利用可能なサブスクリプションアドオンなし。"
+    },
+    "globalAddons": {
+      "title": "グローバルアドオン",
+      "description": "これらのアドオンはすべてのユーザーが利用でき、アカウント全体に適用されます。",
+      "noAddons": "利用可能なグローバルアドオンなし。"
+    },
+    "addToCart": "カートに追加",
+    "requiresSubscription": "サブスクリプションが必要",
+    "backToPlans": "プランに戻る",
+    "errors": {
+      "failedToLoad": "アドオンの読み込みに失敗しました"
+    },
+    "detail": {
+      "title": "アドオン詳細",
+      "status": "ステータス",
+      "startDate": "開始日",
+      "expiryDate": "有効期限",
+      "cancelledDate": "キャンセル日",
+      "price": "価格",
+      "billingPeriod": "請求期間",
+      "invoice": "請求書",
+      "cancelAddon": "アドオンをキャンセル",
+      "cancelConfirm": "このアドオンをキャンセルしてもよろしいですか？",
+      "cancelSuccess": "アドオンが正常にキャンセルされました。",
+      "backToDashboard": "ダッシュボードに戻る",
+      "alreadyCancelled": "このアドオンはキャンセルされました。"
+    }
+  },
+  "addonInfo": {
+    "title": "アドオン詳細",
+    "loading": "アドオン詳細を読み込み中...",
+    "error": "アドオン詳細の読み込みに失敗しました。",
+    "backLink": "戻る",
+    "name": "名前",
+    "price": "価格",
+    "currency": "通貨",
+    "billingPeriod": "請求期間",
+    "description": "説明"
+  },
+  "planDetail": {
+    "title": "プラン詳細",
+    "loading": "プラン詳細を読み込み中...",
+    "error": "プラン詳細の読み込みに失敗しました。",
+    "backLink": "戻る",
+    "name": "名前",
+    "price": "価格",
+    "billingPeriod": "請求期間",
+    "description": "説明",
+    "features": "機能",
+    "status": "ステータス",
+    "active": "アクティブ",
+    "archived": "アーカイブ済み"
+  },
+  "nav": {
+    "subscription": "サブスクリプション",
+    "plans": "プラン",
+    "addons": "アドオン"
+  }
+}

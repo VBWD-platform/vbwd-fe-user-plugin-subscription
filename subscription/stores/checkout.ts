@@ -1,3 +1,14 @@
+/**
+ * Subscription checkout store (plugin-owned, gnostic).
+ *
+ * Holds all subscription-domain checkout state — plan, token bundles, add-ons —
+ * and submits to `/user/checkout`. Used directly by the subscription dashboard
+ * Checkout view, and wrapped as a `CheckoutSource` (id 'subscription') so the
+ * generic core checkout store can drive it on the public `/checkout` page.
+ *
+ * Distinct Pinia id (`subscription-checkout`) so it never collides with the
+ * core generic `checkout` store.
+ */
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { api } from '@/api';
@@ -73,7 +84,7 @@ export interface CheckoutResult {
   message: string;
 }
 
-export const useCheckoutStore = defineStore('checkout', () => {
+export const useSubscriptionCheckoutStore = defineStore('subscription-checkout', () => {
   // State
   const plan = ref<Plan | null>(null);
   const selectedBundles = ref<TokenBundle[]>([]);

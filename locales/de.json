@@ -1,0 +1,146 @@
+{
+  "subscription": {
+    "title": "Abonnement",
+    "loading": "Abonnement wird geladen...",
+    "currentPlan": {
+      "title": "Aktueller Tarif",
+      "noPlan": "Kein Tarif",
+      "noActiveSubscription": "Sie haben kein aktives Abonnement.",
+      "price": "Preis",
+      "currentPeriod": "Aktueller Zeitraum",
+      "nextBillingDate": "Nächstes Abrechnungsdatum"
+    },
+    "tokenBalance": {
+      "title": "Token-Guthaben",
+      "description": "Verwenden Sie Token für API-Aufrufe, Funktionen und mehr.",
+      "purchaseTokens": "Token kaufen"
+    },
+    "manage": {
+      "title": "Abonnement verwalten",
+      "changePlan": "Tarif wechseln",
+      "cancelSubscription": "Abonnement kündigen"
+    },
+    "invoices": {
+      "title": "Rechnungen",
+      "searchPlaceholder": "Rechnungen suchen...",
+      "tableHeaders": {
+        "invoiceNumber": "Rechnungsnr.",
+        "date": "Datum",
+        "amount": "Betrag",
+        "status": "Status",
+        "actions": "Aktionen"
+      },
+      "noInvoices": "Noch keine Rechnungen.",
+      "noInvoicesSearch": "Keine Rechnungen zu Ihrer Suche gefunden.",
+      "downloadPdf": "PDF herunterladen"
+    },
+    "cancelModal": {
+      "title": "Abonnement kündigen",
+      "confirmMessage": "Sind Sie sicher, dass Sie Ihr Abonnement kündigen möchten?",
+      "accessWarning": "Ihr Zugang bleibt bis zum {date} bestehen.",
+      "keepSubscription": "Abonnement behalten",
+      "cancelling": "Wird gekündigt...",
+      "confirmCancellation": "Kündigung bestätigen"
+    },
+    "invoiceModal": {
+      "date": "Datum",
+      "status": "Status",
+      "amount": "Betrag"
+    },
+    "messages": {
+      "subscriptionCancelled": "Abonnement erfolgreich gekündigt",
+      "invoiceDownloadInitiated": "Rechnungsdownload wurde gestartet"
+    },
+    "errors": {
+      "failedToLoad": "Abonnementdaten konnten nicht geladen werden",
+      "failedToCancel": "Abonnement konnte nicht gekündigt werden",
+      "failedToDownload": "Rechnung konnte nicht heruntergeladen werden"
+    }
+  },
+  "plans": {
+    "title": "Tarif auswählen",
+    "loading": "Tarife werden geladen...",
+    "noPlans": "Derzeit sind keine Tarife verfügbar.",
+    "mostPopular": "Beliebtester Tarif",
+    "currentPlan": "Aktueller Tarif",
+    "selectPlan": "Plan auswählen",
+    "processing": "Verarbeite...",
+    "taxIncluded": "inkl. {rate}% MwSt.",
+    "currencyLabel": "Preise anzeigen in:",
+    "tableHeaders": {
+      "name": "Name",
+      "price": "Preis",
+      "billingPeriod": "Abrechnung",
+      "status": "Status",
+      "actions": "Aktionen"
+    }
+  },
+  "addons": {
+    "breadcrumbPlans": "Tarife",
+    "breadcrumbAddons": "Add-ons",
+    "title": "Add-ons",
+    "subtitle": "Erweitern Sie Ihr Abonnement mit zusätzlichen Funktionen",
+    "loading": "Add-ons werden geladen...",
+    "subscriptionAddons": {
+      "title": "Abonnement-Add-ons",
+      "description": "Diese Add-ons erfordern ein aktives Abonnement und werden zusammen mit Ihrem Tarif abgerechnet.",
+      "noAddons": "Keine Abonnement-Add-ons verfügbar."
+    },
+    "globalAddons": {
+      "title": "Globale Add-ons",
+      "description": "Diese Add-ons stehen allen Benutzern zur Verfügung und gelten für Ihr gesamtes Konto.",
+      "noAddons": "Keine globalen Add-ons verfügbar."
+    },
+    "addToCart": "In den Warenkorb",
+    "requiresSubscription": "Abonnement erforderlich",
+    "backToPlans": "Zurück zu den Tarifen",
+    "errors": {
+      "failedToLoad": "Add-ons konnten nicht geladen werden"
+    },
+    "detail": {
+      "title": "Add-on-Details",
+      "status": "Status",
+      "startDate": "Startdatum",
+      "expiryDate": "Ablaufdatum",
+      "cancelledDate": "Kündigungsdatum",
+      "price": "Preis",
+      "billingPeriod": "Abrechnungszeitraum",
+      "invoice": "Rechnung",
+      "cancelAddon": "Add-on kündigen",
+      "cancelConfirm": "Möchten Sie dieses Add-on wirklich kündigen?",
+      "cancelSuccess": "Add-on erfolgreich gekündigt.",
+      "backToDashboard": "Zurück zum Dashboard",
+      "alreadyCancelled": "Dieses Add-on wurde gekündigt."
+    }
+  },
+  "addonInfo": {
+    "title": "Add-on-Details",
+    "loading": "Add-on-Details werden geladen...",
+    "error": "Add-on-Details konnten nicht geladen werden.",
+    "backLink": "Zurück",
+    "name": "Name",
+    "price": "Preis",
+    "currency": "Währung",
+    "billingPeriod": "Abrechnungszeitraum",
+    "description": "Beschreibung"
+  },
+  "planDetail": {
+    "title": "Tarifdetails",
+    "loading": "Tarifdetails werden geladen...",
+    "error": "Tarifdetails konnten nicht geladen werden.",
+    "backLink": "Zurück",
+    "name": "Name",
+    "price": "Preis",
+    "billingPeriod": "Abrechnungszeitraum",
+    "description": "Beschreibung",
+    "features": "Funktionen",
+    "status": "Status",
+    "active": "Aktiv",
+    "archived": "Archiviert"
+  },
+  "nav": {
+    "subscription": "Abonnement",
+    "plans": "Tarife",
+    "addons": "Add-ons"
+  }
+}

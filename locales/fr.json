@@ -1,0 +1,146 @@
+{
+  "subscription": {
+    "title": "Abonnement",
+    "loading": "Chargement de l'abonnement...",
+    "currentPlan": {
+      "title": "Plan Actuel",
+      "noPlan": "Aucun Plan",
+      "noActiveSubscription": "Vous n'avez pas d'abonnement actif.",
+      "price": "Prix",
+      "currentPeriod": "Période Actuelle",
+      "nextBillingDate": "Prochaine Date de Facturation"
+    },
+    "tokenBalance": {
+      "title": "Solde de Jetons",
+      "description": "Utilisez les jetons pour les appels API, les fonctionnalités et plus.",
+      "purchaseTokens": "Acheter des Jetons"
+    },
+    "manage": {
+      "title": "Gérer l'Abonnement",
+      "changePlan": "Changer de Plan",
+      "cancelSubscription": "Annuler l'Abonnement"
+    },
+    "invoices": {
+      "title": "Factures",
+      "searchPlaceholder": "Rechercher des factures...",
+      "tableHeaders": {
+        "invoiceNumber": "Facture #",
+        "date": "Date",
+        "amount": "Montant",
+        "status": "Statut",
+        "actions": "Actions"
+      },
+      "noInvoices": "Aucune facture.",
+      "noInvoicesSearch": "Aucune facture ne correspond à votre recherche.",
+      "downloadPdf": "Télécharger PDF"
+    },
+    "cancelModal": {
+      "title": "Annuler l'Abonnement",
+      "confirmMessage": "Êtes-vous sûr de vouloir annuler votre abonnement ?",
+      "accessWarning": "Votre accès continuera jusqu'au {date}.",
+      "keepSubscription": "Garder l'Abonnement",
+      "cancelling": "Annulation en cours...",
+      "confirmCancellation": "Confirmer l'Annulation"
+    },
+    "invoiceModal": {
+      "date": "Date",
+      "status": "Statut",
+      "amount": "Montant"
+    },
+    "messages": {
+      "subscriptionCancelled": "Abonnement annulé avec succès",
+      "invoiceDownloadInitiated": "Téléchargement de la facture initié"
+    },
+    "errors": {
+      "failedToLoad": "Erreur de chargement des données d'abonnement",
+      "failedToCancel": "Erreur lors de l'annulation de l'abonnement",
+      "failedToDownload": "Erreur lors du téléchargement de la facture"
+    }
+  },
+  "plans": {
+    "title": "Sélectionner un Plan",
+    "loading": "Chargement des plans...",
+    "noPlans": "Aucun plan disponible pour le moment.",
+    "mostPopular": "Populaire",
+    "currentPlan": "Plan Actuel",
+    "selectPlan": "Choisir le plan",
+    "processing": "Traitement...",
+    "taxIncluded": "incl. {rate}% taxes",
+    "currencyLabel": "Afficher les prix en :",
+    "tableHeaders": {
+      "name": "Nom",
+      "price": "Prix",
+      "billingPeriod": "Facturation",
+      "status": "Statut",
+      "actions": "Actions"
+    }
+  },
+  "addons": {
+    "breadcrumbPlans": "Plans",
+    "breadcrumbAddons": "Modules complémentaires",
+    "title": "Modules complémentaires",
+    "subtitle": "Améliorez votre abonnement avec des fonctionnalités supplémentaires",
+    "loading": "Chargement des modules complémentaires...",
+    "subscriptionAddons": {
+      "title": "Modules complémentaires d'Abonnement",
+      "description": "Ces modules complémentaires nécessitent un abonnement actif et seront facturés avec votre plan.",
+      "noAddons": "Aucun module complémentaire d'abonnement disponible."
+    },
+    "globalAddons": {
+      "title": "Modules complémentaires Globaux",
+      "description": "Ces modules complémentaires sont disponibles pour tous les utilisateurs et s'appliquent à tout votre compte.",
+      "noAddons": "Aucun module complémentaire global disponible."
+    },
+    "addToCart": "Ajouter au Panier",
+    "requiresSubscription": "Nécessite un Abonnement",
+    "backToPlans": "Retour aux Plans",
+    "errors": {
+      "failedToLoad": "Erreur de chargement des modules complémentaires"
+    },
+    "detail": {
+      "title": "Détails du Module Complémentaire",
+      "status": "Statut",
+      "startDate": "Date de Début",
+      "expiryDate": "Date d'Expiration",
+      "cancelledDate": "Date d'Annulation",
+      "price": "Prix",
+      "billingPeriod": "Période de Facturation",
+      "invoice": "Facture",
+      "cancelAddon": "Annuler le Module",
+      "cancelConfirm": "Êtes-vous sûr de vouloir annuler ce module complémentaire ?",
+      "cancelSuccess": "Module complémentaire annulé avec succès.",
+      "backToDashboard": "Retour au Tableau de Bord",
+      "alreadyCancelled": "Ce module complémentaire a été annulé."
+    }
+  },
+  "addonInfo": {
+    "title": "Détails du Module Complémentaire",
+    "loading": "Chargement des détails du module complémentaire...",
+    "error": "Erreur de chargement des détails du module complémentaire.",
+    "backLink": "Retour",
+    "name": "Nom",
+    "price": "Prix",
+    "currency": "Devise",
+    "billingPeriod": "Période de Facturation",
+    "description": "Description"
+  },
+  "planDetail": {
+    "title": "Détails du Plan",
+    "loading": "Chargement des détails du plan...",
+    "error": "Erreur de chargement des détails du plan.",
+    "backLink": "Retour",
+    "name": "Nom",
+    "price": "Prix",
+    "billingPeriod": "Période de Facturation",
+    "description": "Description",
+    "features": "Fonctionnalités",
+    "status": "Statut",
+    "active": "Actif",
+    "archived": "Archivé"
+  },
+  "nav": {
+    "subscription": "Abonnement",
+    "plans": "Plans",
+    "addons": "Modules complémentaires"
+  }
+}

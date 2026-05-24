@@ -1,4 +1,50 @@
 import type { IPlugin, IPlatformSDK } from 'vbwd-view-component';
+import { defineAsyncComponent } from 'vue';
+import { userNavRegistry } from '@/plugins/userNavRegistry';
+import {
+  checkoutSourceRegistry,
+  type CheckoutSource,
+  type CheckoutResult,
+} from '@/registries/checkoutSourceRegistry';
+import { useSubscriptionCheckoutStore } from './subscription/stores/checkout';
+import en from './locales/en.json';
+import de from './locales/de.json';
+import es from './locales/es.json';
+import fr from './locales/fr.json';
+import ja from './locales/ja.json';
+import ru from './locales/ru.json';
+import th from './locales/th.json';
+import zh from './locales/zh.json';
+
+/**
+ * Checkout source for subscription-plan purchases on the generic public
+ * /checkout page. Wraps the subscription checkout store so the core checkout
+ * store stays agnostic — it only knows "some source matched this route".
+ */
+const subscriptionCheckoutSource: CheckoutSource = {
+  id: 'subscription',
+  matches: (ctx) => !!ctx.planSlug || ctx.cartType === 'subscription',
+  async load(ctx) {
+    const store = useSubscriptionCheckoutStore();
+    if (ctx.planSlug) {
+      await store.loadPlan(ctx.planSlug);
+      if (store.error) throw new Error(store.error);
+    }
+  },
+  getLineItems: () => useSubscriptionCheckoutStore().lineItems,
+  getOrderTotal: () => useSubscriptionCheckoutStore().orderTotal,
+  async submit(paymentMethodCode) {
+    const store = useSubscriptionCheckoutStore();
+    if (paymentMethodCode) store.setPaymentMethod(paymentMethodCode);
+    await store.submitCheckout();
+    if (store.error) throw new Error(store.error);
+    return store.checkoutResult as CheckoutResult;
+  },
+  reset: () => useSubscriptionCheckoutStore().reset(),
+  summaryComponent: defineAsyncComponent(
+    () => import('./subscription/components/checkout/PlanCheckoutSummary.vue')
+  ),
+};
 
 export const subscriptionPlugin: IPlugin = {
   name: 'subscription',
@@ -6,6 +52,18 @@ export const subscriptionPlugin: IPlugin = {
   description: 'Subscription management — plans, subscriptions, add-ons, checkout',
 
   install(sdk: IPlatformSDK) {
+    // i18n — the subscription plugin owns its translations (nav labels +
+    // subscription/plans/addons/addonInfo/planDetail content). Moved out of
+    // core locales (Sprint 07).
+    sdk.addTranslations('en', en);
+    sdk.addTranslations('de', de);
+    sdk.addTranslations('es', es);
+    sdk.addTranslations('fr', fr);
+    sdk.addTranslations('ja', ja);
+    sdk.addTranslations('ru', ru);
+    sdk.addTranslations('th', th);
+    sdk.addTranslations('zh', zh);
+
     // Routes
     sdk.addRoute({
       path: '/dashboard/plans',
@@ -61,6 +119,36 @@ export const subscriptionPlugin: IPlugin = {
       component: () => import('./subscription/views/Checkout.vue'),
     });
 
+    // Sidebar nav — owned by the plugin (core no longer hardcodes a
+    // subscription nav group). Plans/Add-Ons join the core "Store" group;
+    // Subscription is a top-level sidebar link. Invoices stays core.
+    // No requiredUserPermission: the old hardcoded nav showed these
+    // unconditionally (E2 — behaviour preserved). The routes keep their own
+    // meta.requiredUserPermission as defense-in-depth.
+    userNavRegistry.register({
+      pluginName: 'subscription',
+      to: '/dashboard/subscription',
+      labelKey: 'nav.subscription',
+      testId: 'nav-subscription',
+    });
+    userNavRegistry.register({
+      pluginName: 'subscription',
+      to: '/dashboard/plans',
+      labelKey: 'nav.plans',
+      testId: 'nav-plans',
+      group: 'store',
+    });
+    userNavRegistry.register({
+      pluginName: 'subscription',
+      to: '/dashboard/add-ons',
+      labelKey: 'nav.addons',
+      testId: 'nav-addons',
+      group: 'store',
+    });
+
+    // Register the subscription checkout source so the generic public /checkout
+    // page can purchase plans without core knowing about subscriptions.
+    checkoutSourceRegistry.register(subscriptionCheckoutSource);
   },
 
   activate() {
@@ -68,6 +156,7 @@ export const subscriptionPlugin: IPlugin = {
   },
 
   deactivate() {
-    // Plugin deactivated
+    userNavRegistry.unregister('subscription');
+    checkoutSourceRegistry.unregister('subscription');
   },
 };

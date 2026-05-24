@@ -1,0 +1,153 @@
+{
+  "subscription": {
+    "title": "Subscription",
+    "loading": "Loading subscription...",
+    "currentPlan": {
+      "title": "Current Plan",
+      "noPlan": "No Plan",
+      "noActiveSubscription": "You don't have an active subscription.",
+      "price": "Price",
+      "currentPeriod": "Current Period",
+      "nextBillingDate": "Next Billing Date"
+    },
+    "activeSubscriptions": {
+      "title": "Active Subscriptions",
+      "plan": "Plan",
+      "nextPayment": "Next Payment",
+      "price": "Price",
+      "noSubscriptions": "You don't have any active subscriptions."
+    },
+    "tokenBalance": {
+      "title": "Token Balance",
+      "description": "Use tokens for API calls, features, and more.",
+      "purchaseTokens": "Purchase Tokens"
+    },
+    "manage": {
+      "title": "Manage Subscription",
+      "changePlan": "Change Plan",
+      "cancelSubscription": "Cancel Subscription"
+    },
+    "invoices": {
+      "title": "Invoices",
+      "searchPlaceholder": "Search invoices...",
+      "tableHeaders": {
+        "invoiceNumber": "Invoice #",
+        "date": "Date",
+        "amount": "Amount",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "noInvoices": "No invoices yet.",
+      "noInvoicesSearch": "No invoices found matching your search.",
+      "downloadPdf": "Download PDF"
+    },
+    "cancelModal": {
+      "title": "Cancel Subscription",
+      "confirmMessage": "Are you sure you want to cancel your subscription?",
+      "accessWarning": "Your access will continue until {date}.",
+      "keepSubscription": "Keep Subscription",
+      "cancelling": "Cancelling...",
+      "confirmCancellation": "Confirm Cancellation"
+    },
+    "invoiceModal": {
+      "date": "Date",
+      "status": "Status",
+      "amount": "Amount"
+    },
+    "messages": {
+      "subscriptionCancelled": "Subscription cancelled successfully",
+      "invoiceDownloadInitiated": "Invoice download initiated"
+    },
+    "errors": {
+      "failedToLoad": "Failed to load subscription data",
+      "failedToCancel": "Failed to cancel subscription",
+      "failedToDownload": "Failed to download invoice"
+    }
+  },
+  "plans": {
+    "title": "Select a Plan",
+    "loading": "Loading plans...",
+    "noPlans": "No plans available at this time.",
+    "mostPopular": "Most Popular",
+    "currentPlan": "Current Plan",
+    "selectPlan": "Select Plan",
+    "processing": "Processing...",
+    "taxIncluded": "incl. {rate}% tax",
+    "currencyLabel": "Display prices in:",
+    "tableHeaders": {
+      "name": "Name",
+      "price": "Price",
+      "billingPeriod": "Billing",
+      "status": "Status",
+      "actions": "Actions"
+    }
+  },
+  "addons": {
+    "breadcrumbPlans": "Plans",
+    "breadcrumbAddons": "Add-ons",
+    "title": "Add-ons",
+    "subtitle": "Enhance your subscription with additional features",
+    "loading": "Loading add-ons...",
+    "subscriptionAddons": {
+      "title": "Subscription Add-ons",
+      "description": "These add-ons require an active subscription and will be billed along with your plan.",
+      "noAddons": "No subscription add-ons available."
+    },
+    "globalAddons": {
+      "title": "Global Add-ons",
+      "description": "These add-ons are available to all users and apply to your entire account.",
+      "noAddons": "No global add-ons available."
+    },
+    "addToCart": "Add to Cart",
+    "requiresSubscription": "Requires Subscription",
+    "backToPlans": "Back to Plans",
+    "errors": {
+      "failedToLoad": "Failed to load add-ons"
+    },
+    "detail": {
+      "title": "Add-on Details",
+      "status": "Status",
+      "startDate": "Start Date",
+      "expiryDate": "Expiry Date",
+      "cancelledDate": "Cancelled Date",
+      "price": "Price",
+      "billingPeriod": "Billing Period",
+      "invoice": "Invoice",
+      "cancelAddon": "Cancel Add-on",
+      "cancelConfirm": "Are you sure you want to cancel this add-on?",
+      "cancelSuccess": "Add-on cancelled successfully.",
+      "backToDashboard": "Back to Dashboard",
+      "alreadyCancelled": "This add-on has been cancelled."
+    }
+  },
+  "addonInfo": {
+    "title": "Add-On Details",
+    "loading": "Loading add-on details...",
+    "error": "Failed to load add-on details.",
+    "backLink": "Back",
+    "name": "Name",
+    "price": "Price",
+    "currency": "Currency",
+    "billingPeriod": "Billing Period",
+    "description": "Description"
+  },
+  "planDetail": {
+    "title": "Plan Details",
+    "loading": "Loading plan details...",
+    "error": "Failed to load plan details.",
+    "backLink": "Back",
+    "name": "Name",
+    "price": "Price",
+    "billingPeriod": "Billing Period",
+    "description": "Description",
+    "features": "Features",
+    "status": "Status",
+    "active": "Active",
+    "archived": "Archived"
+  },
+  "nav": {
+    "subscription": "Subscription",
+    "plans": "Plans",
+    "addons": "Add-ons"
+  }
+}
