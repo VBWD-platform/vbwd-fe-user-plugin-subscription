@@ -85,10 +85,14 @@ export interface CheckoutResult {
 }
 
 export const useSubscriptionCheckoutStore = defineStore('subscription-checkout', () => {
+  // The persisted shopping cart (fe-core) is the single source of truth for the
+  // whole checkout selection — plan, token bundles and add-ons. Deriving them
+  // from it means they survive navigation away from the checkout view AND
+  // logout/login, and stay in sync with the cart icon/popup — no separate
+  // ephemeral copy to drift or lose.
+  const cart = useCartStore();
+
   // State
-  const plan = ref<Plan | null>(null);
-  const selectedBundles = ref<TokenBundle[]>([]);
-  const selectedAddons = ref<AddOn[]>([]);
   const availableBundles = ref<TokenBundle[]>([]);
   const availableAddons = ref<AddOn[]>([]);
   const loading = ref(false);
@@ -97,6 +101,50 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
   const checkoutResult = ref<CheckoutResult | null>(null);
   const isCartCheckout = ref(false);
   const paymentMethodCode = ref<string | null>(null);
+
+  // Plan derived from the cart's single PLAN item (rich fields kept in metadata,
+  // refreshed by loadPlan). The cart item id is the plan slug so it can be
+  // reloaded from the cart route; metadata.plan_id holds the UUID used on submit.
+  const plan = computed<Plan | null>(() => {
+    const item = cart.getItemsByType('PLAN')[0];
+    if (!item) return null;
+    const meta = item.metadata ?? {};
+    return {
+      id: (meta.plan_id as string) || item.id,
+      name: item.name,
+      slug: (meta.slug as string) || item.id,
+      description: meta.description as string | undefined,
+      price: item.price,
+      display_price: meta.display_price as number | undefined,
+      currency: (meta.currency as string) || 'USD',
+      billing_period: (meta.billing_period as string) || 'monthly',
+    };
+  });
+
+  // Selections derived from the persisted cart (single source of truth).
+  const selectedBundles = computed<TokenBundle[]>(() =>
+    cart.getItemsByType('TOKEN_BUNDLE').map((item) => ({
+      id: item.id,
+      name: item.name,
+      token_amount: (item.metadata?.token_amount as number) || 0,
+      price: item.price,
+      currency: (item.metadata?.currency as string) || 'USD',
+      is_active: true,
+    }))
+  );
+
+  const selectedAddons = computed<AddOn[]>(() =>
+    cart.getItemsByType('ADD_ON').map((item) => ({
+      id: item.id,
+      name: item.name,
+      slug: (item.metadata?.slug as string) || item.name.toLowerCase().replace(/\s+/g, '-'),
+      description: (item.metadata?.description as string) || '',
+      price: item.price,
+      currency: (item.metadata?.currency as string) || 'USD',
+      billing_period: (item.metadata?.billing_period as string) || 'monthly',
+      is_active: true,
+    }))
+  );
 
   // Computed
   const orderTotal = computed(() => {
@@ -155,7 +203,24 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
       const rawPlan = response.plan || response as unknown as Plan;
       // API may return price as {currency_code, price_decimal} object; normalize to number
       rawPlan.price = normalizePrice(rawPlan.price_float ?? rawPlan.display_price ?? rawPlan.price);
-      plan.value = rawPlan;
+      // Mirror the selected plan into the cart as the single PLAN item (replacing
+      // any previously chosen plan — you subscribe to one plan at a time). This
+      // makes "Select plan" add the plan to the persisted cart icon/popup too.
+      cart.getItemsByType('PLAN').forEach((item) => cart.removeItem(item.id));
+      cart.addItem({
+        type: 'PLAN',
+        id: rawPlan.slug || slug,
+        name: rawPlan.name,
+        price: Number(rawPlan.price) || 0,
+        metadata: {
+          plan_id: rawPlan.id,
+          slug: rawPlan.slug || slug,
+          description: rawPlan.description,
+          display_price: rawPlan.display_price,
+          billing_period: rawPlan.billing_period,
+          currency: rawPlan.currency,
+        },
+      });
     } catch (e: unknown) {
       const err = e as { response?: { data?: { error?: string } }; message?: string };
       error.value = err.response?.data?.error || err.message || 'Failed to load plan';
@@ -178,23 +243,39 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
   }
 
   function addBundle(bundle: TokenBundle) {
-    if (!selectedBundles.value.find((b) => b.id === bundle.id)) {
-      selectedBundles.value = [...selectedBundles.value, bundle];
-    }
+    // Idempotent — one of each bundle in the cart (the UI toggles selection).
+    if (cart.getItemById(bundle.id)) return;
+    cart.addItem({
+      type: 'TOKEN_BUNDLE',
+      id: bundle.id,
+      name: bundle.name,
+      price: Number(bundle.price),
+      metadata: { token_amount: bundle.token_amount, currency: bundle.currency },
+    });
   }
 
   function removeBundle(bundleId: string) {
-    selectedBundles.value = selectedBundles.value.filter((b) => b.id !== bundleId);
+    cart.removeItem(bundleId);
   }
 
   function addAddon(addon: AddOn) {
-    if (!selectedAddons.value.find((a) => a.id === addon.id)) {
-      selectedAddons.value = [...selectedAddons.value, addon];
-    }
+    if (cart.getItemById(addon.id)) return;
+    cart.addItem({
+      type: 'ADD_ON',
+      id: addon.id,
+      name: addon.name,
+      price: Number(addon.price),
+      metadata: {
+        slug: addon.slug,
+        description: addon.description,
+        billing_period: addon.billing_period,
+        currency: addon.currency,
+      },
+    });
   }
 
   function removeAddon(addonId: string) {
-    selectedAddons.value = selectedAddons.value.filter((a) => a.id !== addonId);
+    cart.removeItem(addonId);
   }
 
   async function loadFromCart() {
@@ -203,45 +284,20 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
     isCartCheckout.value = true;
 
     try {
-      const cartStore = useCartStore();
-      const cartItems = cartStore.items;
+      const cartItems = cart.items;
 
       if (cartItems.length === 0) {
         error.value = 'Cart is empty';
         return;
       }
 
-      // Map cart items to checkout selections
+      // Token bundles and add-ons derive from the cart automatically
+      // (see selectedBundles / selectedAddons). Only the plan needs loading
+      // into the rich `plan` ref for display.
       const planItem = cartItems.find(item => item.type === 'PLAN');
-      const bundleItems = cartItems.filter(item => item.type === 'TOKEN_BUNDLE');
-      const addonItems = cartItems.filter(item => item.type === 'ADD_ON');
-
-      // If cart has a plan, load the full plan data
       if (planItem) {
         await loadPlan(planItem.id);
       }
-
-      // Map token bundles from cart
-      selectedBundles.value = bundleItems.map(item => ({
-        id: item.id,
-        name: item.name,
-        token_amount: (item.metadata?.token_amount as number) || 0,
-        price: item.price,
-        currency: (item.metadata?.currency as string) || 'USD',
-        is_active: true,
-      }));
-
-      // Map addons from cart
-      selectedAddons.value = addonItems.map(item => ({
-        id: item.id,
-        name: item.name,
-        slug: (item.metadata?.slug as string) || item.name.toLowerCase().replace(/\s+/g, '-'),
-        description: (item.metadata?.description as string) || '',
-        price: item.price,
-        currency: (item.metadata?.currency as string) || 'USD',
-        billing_period: (item.metadata?.billing_period as string) || 'monthly',
-        is_active: true,
-      }));
     } catch (e: unknown) {
       const err = e as { response?: { data?: { error?: string } }; message?: string };
       error.value = err.response?.data?.error || err.message || 'Failed to load cart';
@@ -280,11 +336,9 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
       const response = await api.post('/user/checkout', payload) as CheckoutResult;
       checkoutResult.value = response;
 
-      // Clear cart after successful checkout
-      if (isCartCheckout.value) {
-        const cartStore = useCartStore();
-        cartStore.clearCart();
-      }
+      // Selections live in the cart now, so clear it after any successful
+      // checkout — the chosen bundles/add-ons have been purchased.
+      cart.clearCart();
     } catch (e: unknown) {
       const err = e as { response?: { data?: { error?: string } }; message?: string };
       error.value = err.response?.data?.error || err.message || 'Checkout failed';
@@ -294,9 +348,6 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
   }
 
   function reset() {
-    plan.value = null;
-    selectedBundles.value = [];
-    selectedAddons.value = [];
     availableBundles.value = [];
     availableAddons.value = [];
     error.value = null;
@@ -305,6 +356,11 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
     submitting.value = false;
     isCartCheckout.value = false;
     paymentMethodCode.value = null;
+    // NOTE: the plan + selected bundles/add-ons are intentionally NOT cleared
+    // here — they live in the persisted cart so they survive navigation away
+    // from the checkout view (Checkout.vue's onUnmounted calls reset()). They are
+    // cleared only on a successful checkout (submitCheckout) or by the user via
+    // the cart.
   }
 
   return {

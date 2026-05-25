@@ -312,8 +312,10 @@ function formatPrice(p: Plan): string {
 
 <style scoped>
 .tarif-plan-detail {
-  max-width: 900px;
-  margin: 0 auto;
+  /* Left-justified to the sidebar, matching the Subscription page block
+     (was centered via margin: 0 auto). */
+  max-width: 1000px;
+  margin: 0;
   padding: 20px;
 }
 .plan-nav-actions {

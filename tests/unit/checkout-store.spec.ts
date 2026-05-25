@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useSubscriptionCheckoutStore } from '../../subscription/stores/checkout';
+import { useCartStore } from 'vbwd-view-component';
 import { api } from '@/api';
 
 vi.mock('@/api', () => ({
@@ -13,21 +14,40 @@ vi.mock('@/api', () => ({
   isAuthenticated: vi.fn(() => true)
 }));
 
-let mockCartItems: Array<{ type: string; id: string; name: string; price: number; quantity: number; metadata?: Record<string, unknown> }> = [];
-const mockClearCart = vi.fn();
+// Reactive in-memory fake of the fe-core cart store. Mirrors the real public
+// contract (addItem/removeItem/getItemById/getItemsByType/items/clearCart) so
+// the checkout store's cart-backed selections are exercised faithfully — the
+// computeds need a reactive `items` to recompute on mutation.
+vi.mock('vbwd-view-component', async () => {
+  const { reactive } = await import('vue');
+  const items = reactive<Array<{ type: string; id: string; name: string; price: number; quantity: number; metadata?: Record<string, unknown> }>>([]);
+  const clearCart = vi.fn(() => { items.splice(0, items.length); });
+  const cart = {
+    items,
+    get isEmpty() { return items.length === 0; },
+    addItem(input: { type: string; id: string; name: string; price: number; metadata?: Record<string, unknown> }) {
+      const i = items.findIndex((it) => it.id === input.id && it.type === input.type);
+      if (i >= 0) items[i].quantity += 1;
+      else items.push({ ...input, quantity: 1 });
+    },
+    removeItem(id: string) {
+      const i = items.findIndex((it) => it.id === id);
+      if (i >= 0) items.splice(i, 1);
+    },
+    getItemById(id: string) { return items.find((it) => it.id === id); },
+    getItemsByType(type: string) { return items.filter((it) => it.type === type); },
+    clearCart,
+  };
+  return { useCartStore: () => cart };
+});
 
-vi.mock('vbwd-view-component', () => ({
-  useCartStore: () => ({
-    get items() { return mockCartItems; },
-    clearCart: mockClearCart,
-  }),
-}));
+const cart = () => useCartStore();
 
 describe('SubscriptionCheckoutStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    cart().items.splice(0, cart().items.length);
     vi.clearAllMocks();
-    mockCartItems = [];
   });
 
   describe('initial state', () => {
@@ -46,26 +66,106 @@ describe('SubscriptionCheckoutStore', () => {
     });
   });
 
+  // The persistence contract: selections are backed by the persisted cart, so
+  // they survive navigation (reset) and show up in the cart icon/popup.
+  describe('cart-backed selections (persistence)', () => {
+    it('addBundle writes the bundle to the persisted cart', () => {
+      const store = useSubscriptionCheckoutStore();
+      store.addBundle({ id: 'b1', name: '1000 Tokens', token_amount: 1000, price: 10, currency: 'USD', is_active: true });
+
+      expect(cart().getItemsByType('TOKEN_BUNDLE')).toHaveLength(1);
+      expect(store.selectedBundles).toHaveLength(1);
+      expect(store.selectedBundles[0].id).toBe('b1');
+      expect(store.selectedBundles[0].token_amount).toBe(1000);
+    });
+
+    it('addAddon writes the add-on to the persisted cart', () => {
+      const store = useSubscriptionCheckoutStore();
+      store.addAddon({ id: 'a1', name: 'Priority Support', slug: 'priority-support', description: 'Fast help', price: 15, currency: 'USD', billing_period: 'monthly', is_active: true });
+
+      expect(cart().getItemsByType('ADD_ON')).toHaveLength(1);
+      expect(store.selectedAddons).toHaveLength(1);
+      expect(store.selectedAddons[0].id).toBe('a1');
+      expect(store.selectedAddons[0].slug).toBe('priority-support');
+    });
+
+    it('does not duplicate when the same item is added twice', () => {
+      const store = useSubscriptionCheckoutStore();
+      const bundle = { id: 'b1', name: '1000 Tokens', token_amount: 1000, price: 10, currency: 'USD', is_active: true };
+      store.addBundle(bundle);
+      store.addBundle(bundle);
+
+      expect(store.selectedBundles).toHaveLength(1);
+      expect(cart().getItemsByType('TOKEN_BUNDLE')).toHaveLength(1);
+    });
+
+    it('removeBundle / removeAddon delete from the cart', () => {
+      const store = useSubscriptionCheckoutStore();
+      store.addBundle({ id: 'b1', name: '1000 Tokens', token_amount: 1000, price: 10, currency: 'USD', is_active: true });
+      store.addAddon({ id: 'a1', name: 'Support', slug: 'support', description: '', price: 15, currency: 'USD', billing_period: 'monthly', is_active: true });
+
+      store.removeBundle('b1');
+      store.removeAddon('a1');
+
+      expect(store.selectedBundles).toHaveLength(0);
+      expect(store.selectedAddons).toHaveLength(0);
+      expect(cart().items).toHaveLength(0);
+    });
+
+    it('selections survive reset() (navigation away from checkout)', () => {
+      const store = useSubscriptionCheckoutStore();
+      store.addBundle({ id: 'b1', name: '1000 Tokens', token_amount: 1000, price: 10, currency: 'USD', is_active: true });
+      store.addAddon({ id: 'a1', name: 'Support', slug: 'support', description: '', price: 15, currency: 'USD', billing_period: 'monthly', is_active: true });
+
+      store.reset();
+
+      // The persisted cart still holds the selections, so a remounted checkout
+      // view re-derives them — they are not lost on navigation.
+      expect(cart().items).toHaveLength(2);
+      expect(store.selectedBundles).toHaveLength(1);
+      expect(store.selectedAddons).toHaveLength(1);
+    });
+  });
+
+  describe('loadPlan (Select plan adds to cart)', () => {
+    it('adds the selected plan to the persisted cart', async () => {
+      vi.mocked(api.get).mockResolvedValueOnce({
+        plan: { id: 'plan-uuid-1', name: 'Pro Plan', slug: 'pro', price: 29, currency: 'USD', billing_period: 'MONTHLY' }
+      });
+
+      const store = useSubscriptionCheckoutStore();
+      await store.loadPlan('pro');
+
+      const planItems = cart().getItemsByType('PLAN');
+      expect(planItems).toHaveLength(1);
+      expect(planItems[0].id).toBe('pro');           // cart id == slug
+      expect(planItems[0].metadata?.plan_id).toBe('plan-uuid-1');
+      expect(store.plan?.name).toBe('Pro Plan');
+      expect(store.plan?.id).toBe('plan-uuid-1');     // UUID used on submit
+    });
+
+    it('keeps a single plan in the cart (new selection replaces the old)', async () => {
+      const store = useSubscriptionCheckoutStore();
+
+      vi.mocked(api.get).mockResolvedValueOnce({
+        plan: { id: 'uuid-basic', name: 'Basic', slug: 'basic', price: 9, currency: 'USD', billing_period: 'MONTHLY' }
+      });
+      await store.loadPlan('basic');
+
+      vi.mocked(api.get).mockResolvedValueOnce({
+        plan: { id: 'uuid-pro', name: 'Pro', slug: 'pro', price: 29, currency: 'USD', billing_period: 'MONTHLY' }
+      });
+      await store.loadPlan('pro');
+
+      expect(cart().getItemsByType('PLAN')).toHaveLength(1);
+      expect(store.plan?.slug).toBe('pro');
+    });
+  });
+
   describe('loadFromCart', () => {
-    it('populates bundles and addons from cart', async () => {
-      mockCartItems = [
-        {
-          type: 'TOKEN_BUNDLE',
-          id: 'bundle-1',
-          name: '1000 Tokens',
-          price: 10,
-          quantity: 1,
-          metadata: { token_amount: 1000, currency: 'USD' }
-        },
-        {
-          type: 'ADD_ON',
-          id: 'addon-1',
-          name: 'Priority Support',
-          price: 15,
-          quantity: 1,
-          metadata: { slug: 'priority-support', description: 'Priority support addon', currency: 'USD', billing_period: 'monthly' }
-        },
-      ];
+    it('derives bundles and addons from the cart', async () => {
+      cart().addItem({ type: 'TOKEN_BUNDLE', id: 'bundle-1', name: '1000 Tokens', price: 10, metadata: { token_amount: 1000, currency: 'USD' } });
+      cart().addItem({ type: 'ADD_ON', id: 'addon-1', name: 'Priority Support', price: 15, metadata: { slug: 'priority-support', description: 'Priority support addon', currency: 'USD', billing_period: 'monthly' } });
 
       const store = useSubscriptionCheckoutStore();
       await store.loadFromCart();
@@ -81,15 +181,7 @@ describe('SubscriptionCheckoutStore', () => {
     });
 
     it('loads plan from cart when present', async () => {
-      mockCartItems = [
-        {
-          type: 'PLAN',
-          id: 'plan-slug-1',
-          name: 'Pro Plan',
-          price: 29,
-          quantity: 1,
-        },
-      ];
+      cart().addItem({ type: 'PLAN', id: 'plan-slug-1', name: 'Pro Plan', price: 29 });
 
       vi.mocked(api.get).mockResolvedValueOnce({
         plan: { id: 'plan-uuid-1', name: 'Pro Plan', slug: 'plan-slug-1', price: 29, currency: 'USD', billing_period: 'MONTHLY' }
@@ -104,8 +196,6 @@ describe('SubscriptionCheckoutStore', () => {
     });
 
     it('sets error when cart is empty', async () => {
-      mockCartItems = [];
-
       const store = useSubscriptionCheckoutStore();
       await store.loadFromCart();
 
@@ -116,9 +206,7 @@ describe('SubscriptionCheckoutStore', () => {
   describe('submitCheckout', () => {
     it('works without plan (bundles only)', async () => {
       const store = useSubscriptionCheckoutStore();
-      store.selectedBundles = [
-        { id: 'b1', name: '1000 Tokens', token_amount: 1000, price: 10, currency: 'USD', is_active: true }
-      ];
+      store.addBundle({ id: 'b1', name: '1000 Tokens', token_amount: 1000, price: 10, currency: 'USD', is_active: true });
 
       vi.mocked(api.post).mockResolvedValueOnce({
         invoice: { id: 'inv-1', invoice_number: 'INV-001', status: 'pending', amount: '10.00', total_amount: '10.00', currency: 'USD', line_items: [] },
@@ -139,7 +227,7 @@ describe('SubscriptionCheckoutStore', () => {
 
     it('sends payment_method_code when set', async () => {
       const store = useSubscriptionCheckoutStore();
-      store.plan = { id: 'p1', name: 'Pro', slug: 'pro', price: 29, currency: 'USD', billing_period: 'MONTHLY' };
+      cart().addItem({ type: 'PLAN', id: 'pro', name: 'Pro', price: 29, metadata: { plan_id: 'p1', slug: 'pro', billing_period: 'MONTHLY', currency: 'USD' } });
       store.setPaymentMethod('stripe');
 
       vi.mocked(api.post).mockResolvedValueOnce({
@@ -169,12 +257,9 @@ describe('SubscriptionCheckoutStore', () => {
       expect(api.post).not.toHaveBeenCalled();
     });
 
-    it('clears cart after successful cart checkout', async () => {
+    it('clears the cart after a successful checkout', async () => {
       const store = useSubscriptionCheckoutStore();
-      store.isCartCheckout = true;
-      store.selectedBundles = [
-        { id: 'b1', name: '1000 Tokens', token_amount: 1000, price: 10, currency: 'USD', is_active: true }
-      ];
+      store.addBundle({ id: 'b1', name: '1000 Tokens', token_amount: 1000, price: 10, currency: 'USD', is_active: true });
 
       vi.mocked(api.post).mockResolvedValueOnce({
         invoice: { id: 'inv-1', invoice_number: 'INV-001', status: 'pending', amount: '10.00', total_amount: '10.00', currency: 'USD', line_items: [] },
@@ -185,20 +270,16 @@ describe('SubscriptionCheckoutStore', () => {
 
       await store.submitCheckout();
 
-      expect(mockClearCart).toHaveBeenCalled();
+      expect(cart().clearCart).toHaveBeenCalled();
     });
   });
 
   describe('orderTotal and lineItems', () => {
     it('computes correctly without plan', () => {
       const store = useSubscriptionCheckoutStore();
-      store.selectedBundles = [
-        { id: 'b1', name: '1000 Tokens', token_amount: 1000, price: 10, currency: 'USD', is_active: true },
-        { id: 'b2', name: '5000 Tokens', token_amount: 5000, price: 40, currency: 'USD', is_active: true },
-      ];
-      store.selectedAddons = [
-        { id: 'a1', name: 'Support', slug: 'support', description: '', price: 15, currency: 'USD', billing_period: 'monthly', is_active: true },
-      ];
+      store.addBundle({ id: 'b1', name: '1000 Tokens', token_amount: 1000, price: 10, currency: 'USD', is_active: true });
+      store.addBundle({ id: 'b2', name: '5000 Tokens', token_amount: 5000, price: 40, currency: 'USD', is_active: true });
+      store.addAddon({ id: 'a1', name: 'Support', slug: 'support', description: '', price: 15, currency: 'USD', billing_period: 'monthly', is_active: true });
 
       expect(store.orderTotal).toBe(65);
       expect(store.lineItems).toHaveLength(3);
@@ -209,10 +290,8 @@ describe('SubscriptionCheckoutStore', () => {
 
     it('includes plan in total when present', () => {
       const store = useSubscriptionCheckoutStore();
-      store.plan = { id: 'p1', name: 'Pro', slug: 'pro', price: 29, currency: 'USD', billing_period: 'MONTHLY' };
-      store.selectedBundles = [
-        { id: 'b1', name: '1000 Tokens', token_amount: 1000, price: 10, currency: 'USD', is_active: true },
-      ];
+      cart().addItem({ type: 'PLAN', id: 'pro', name: 'Pro', price: 29, metadata: { plan_id: 'p1', slug: 'pro', billing_period: 'MONTHLY', currency: 'USD' } });
+      store.addBundle({ id: 'b1', name: '1000 Tokens', token_amount: 1000, price: 10, currency: 'USD', is_active: true });
 
       expect(store.orderTotal).toBe(39);
       expect(store.lineItems).toHaveLength(2);
@@ -231,19 +310,22 @@ describe('SubscriptionCheckoutStore', () => {
   });
 
   describe('reset', () => {
-    it('resets all state including cart checkout fields', () => {
+    it('resets ephemeral state but keeps the persisted cart', () => {
       const store = useSubscriptionCheckoutStore();
-      store.plan = { id: 'p1', name: 'Pro', slug: 'pro', price: 29, currency: 'USD', billing_period: 'MONTHLY' };
+      cart().addItem({ type: 'PLAN', id: 'pro', name: 'Pro', price: 29, metadata: { plan_id: 'p1', slug: 'pro', billing_period: 'MONTHLY', currency: 'USD' } });
       store.isCartCheckout = true;
       store.paymentMethodCode = 'stripe';
       store.error = 'some error';
+      store.addBundle({ id: 'b1', name: '1000 Tokens', token_amount: 1000, price: 10, currency: 'USD', is_active: true });
 
       store.reset();
 
-      expect(store.plan).toBeNull();
       expect(store.isCartCheckout).toBe(false);
       expect(store.paymentMethodCode).toBeNull();
       expect(store.error).toBeNull();
+      // Cart-backed plan + selections persist across reset (navigation).
+      expect(store.plan).not.toBeNull();
+      expect(store.selectedBundles).toHaveLength(1);
     });
   });
 });
