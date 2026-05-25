@@ -215,6 +215,20 @@ export const useSubscriptionStore = defineStore('subscription', {
       }
     },
 
+    async fetchAddons() {
+      this.addonsLoading = true;
+      this.addonsError = null;
+
+      try {
+        const response = await api.get('/user/addons') as { addon_subscriptions: AddonSubscription[] };
+        this.addonSubscriptions = response.addon_subscriptions || [];
+      } catch (error) {
+        this.addonsError = (error as Error).message || 'Failed to fetch add-ons';
+      } finally {
+        this.addonsLoading = false;
+      }
+    },
+
     async fetchAddonDetail(addonSubId: string) {
       this.addonsLoading = true;
       this.addonsError = null;

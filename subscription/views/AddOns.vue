@@ -188,7 +188,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/api';
 import { useSubscriptionStore } from '../stores/subscription';
-import { useCartStore } from 'vbwd-view-component';
+import { useCartStore, eventBus, AppEvents } from 'vbwd-view-component';
 
 interface AddOn {
   id: string;
@@ -258,6 +258,11 @@ function addToCart(addon: AddOn) {
       billing_period: addon.billing_period,
       slug: addon.slug,
     },
+  });
+  eventBus.emit(AppEvents.NOTIFICATION_SHOW, {
+    type: 'success',
+    message: t('cart.addedToCart', { name: addon.name }),
+    duration: 3000,
   });
 }
 

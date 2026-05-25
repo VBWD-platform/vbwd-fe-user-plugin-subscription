@@ -86,8 +86,13 @@ export const subscriptionPlugin: IPlugin = {
     sdk.addRoute({
       path: '/dashboard/subscription',
       name: 'subscription',
+      // Any logged-in user may VIEW their own subscription page (the nav shows
+      // it unconditionally). It only requires the baseline view permission the
+      // "Logged In" access level grants — not subscription.manage, which would
+      // lock out every regular user. Management actions inside the page can be
+      // gated separately.
       component: () => import('./subscription/views/Subscription.vue'),
-      meta: { requiredUserPermission: 'subscription.manage' },
+      meta: { requiredUserPermission: 'subscription.plans.view' },
     });
     sdk.addRoute({
       path: '/dashboard/add-ons',

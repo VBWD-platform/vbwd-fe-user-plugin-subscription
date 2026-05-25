@@ -62,6 +62,18 @@
       "failedToLoad": "Failed to load subscription data",
       "failedToCancel": "Failed to cancel subscription",
       "failedToDownload": "Failed to download invoice"
+    },
+    "addons": {
+      "title": "Add-ons",
+      "active": "Active add-ons",
+      "previous": "Previous add-ons",
+      "name": "Add-on",
+      "price": "Price",
+      "renews": "Renews",
+      "ended": "Ended",
+      "status": "Status",
+      "noActive": "You have no active add-ons.",
+      "browse": "Browse add-ons"
     }
   },
   "plans": {

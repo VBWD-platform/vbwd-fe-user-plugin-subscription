@@ -130,6 +130,116 @@
         </div>
       </div>
 
+      <!-- Add-ons Section -->
+      <div
+        class="card addons-card"
+        data-testid="addons-section"
+      >
+        <h2>{{ $t('subscription.addons.title') }}</h2>
+
+        <div
+          v-if="addonsLoading"
+          class="no-subscription"
+        >
+          {{ $t('common.loading') }}
+        </div>
+
+        <template v-else>
+          <h3 class="addons-subhead">
+            {{ $t('subscription.addons.active') }}
+          </h3>
+          <div
+            v-if="activeAddons.length > 0"
+            class="active-subs-table-wrap"
+          >
+            <table class="active-subs-table">
+              <thead>
+                <tr>
+                  <th>{{ $t('subscription.addons.name') }}</th>
+                  <th>{{ $t('subscription.addons.price') }}</th>
+                  <th>{{ $t('subscription.addons.renews') }}</th>
+                  <th>{{ $t('subscription.addons.status') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="addon in activeAddons"
+                  :key="addon.id"
+                  data-testid="active-addon-row"
+                  style="cursor: pointer"
+                  @click="goToAddon(addon)"
+                >
+                  <td>{{ addon.addon?.name || '—' }}</td>
+                  <td>
+                    <template v-if="addon.addon?.price">
+                      {{ formatPrice(addon.addon.price) }}<span v-if="addon.addon?.billing_period"> / {{ addon.addon.billing_period }}</span>
+                    </template>
+                    <template v-else>
+                      —
+                    </template>
+                  </td>
+                  <td>{{ formatDate(addon.expires_at) }}</td>
+                  <td>
+                    <span
+                      class="plan-status"
+                      :class="addon.status.toLowerCase()"
+                    >{{ formatStatus(addon.status) }}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p
+            v-else
+            class="no-subscription"
+            data-testid="no-active-addons"
+          >
+            {{ $t('subscription.addons.noActive') }}
+            <router-link
+              to="/dashboard/add-ons"
+              class="addons-link"
+            >
+              {{ $t('subscription.addons.browse') }}
+            </router-link>
+          </p>
+
+          <template v-if="inactiveAddons.length > 0">
+            <h3 class="addons-subhead">
+              {{ $t('subscription.addons.previous') }}
+            </h3>
+            <div class="active-subs-table-wrap">
+              <table class="active-subs-table">
+                <thead>
+                  <tr>
+                    <th>{{ $t('subscription.addons.name') }}</th>
+                    <th>{{ $t('subscription.addons.ended') }}</th>
+                    <th>{{ $t('subscription.addons.status') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="addon in inactiveAddons"
+                    :key="addon.id"
+                    data-testid="previous-addon-row"
+                    style="cursor: pointer"
+                    @click="goToAddon(addon)"
+                  >
+                    <td>{{ addon.addon?.name || '—' }}</td>
+                    <td>{{ formatDate(addon.cancelled_at || addon.expires_at) }}</td>
+                    <td>
+                      <span
+                        class="plan-status"
+                        :class="addon.status.toLowerCase()"
+                      >{{ formatStatus(addon.status) }}</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </template>
+        </template>
+      </div>
+
       <!-- Invoices Section -->
       <div
         class="card invoices-card"
@@ -415,6 +525,9 @@ const pageSize = 10;
 
 // Computed
 const activeSubscriptions = computed(() => subscriptionStore.activeSubscriptions);
+const activeAddons = computed(() => subscriptionStore.activeAddons);
+const inactiveAddons = computed(() => subscriptionStore.inactiveAddons);
+const addonsLoading = computed(() => subscriptionStore.addonsLoading);
 
 const filteredInvoices = computed(() => {
   let result = [...invoicesStore.invoices];
@@ -477,6 +590,7 @@ async function loadData(): Promise<void> {
     await Promise.all([
       subscriptionStore.fetchSubscription().catch(() => null),
       subscriptionStore.fetchActiveSubscriptions().catch(() => null),
+      subscriptionStore.fetchAddons().catch(() => null),
       invoicesStore.fetchInvoices().catch(() => null),
       fetchTokenBalance(),
     ]);
@@ -563,6 +677,10 @@ function goToPlan(sub: { plan?: { slug?: string } }): void {
   if (sub.plan?.slug) {
     router.push(`/dashboard/plan/${sub.plan.slug}`)
   }
+}
+
+function goToAddon(addon: { id: string }): void {
+  router.push(`/dashboard/add-ons/${addon.id}`);
 }
 
 function formatStatus(status: string): string {
@@ -1145,5 +1263,21 @@ h1 {
     flex-wrap: wrap;
     gap: 8px;
   }
+}
+
+.addons-subhead {
+  margin: 18px 0 10px;
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.addons-subhead:first-of-type {
+  margin-top: 4px;
+}
+
+.addons-link {
+  margin-left: 6px;
+  color: #2563eb;
+  font-weight: 600;
 }
 </style>
