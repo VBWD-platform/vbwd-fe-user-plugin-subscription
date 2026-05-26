@@ -75,8 +75,12 @@
                   class="actions-cell"
                   @click.stop
                 >
+                  <!-- Cancellable for any non-terminal status. The category
+                       "is_single" guard on checkout rejects new subs while
+                       ACTIVE *or* TRIALING is in flight, so trialing users
+                       must be able to cancel here to switch plans. -->
                   <button
-                    v-if="sub.status === 'ACTIVE'"
+                    v-if="isCancellableStatus(sub.status)"
                     class="btn danger small"
                     data-testid="cancel-subscription"
                     @click="requestCancel(sub)"
@@ -685,6 +689,15 @@ function goToAddon(addon: { id: string }): void {
 
 function formatStatus(status: string): string {
   return status ? status.charAt(0).toUpperCase() + status.slice(1) : '-';
+}
+
+// Any non-terminal status is cancellable; the model's ``cancel()`` is
+// idempotent at the backend so we don't need a finer-grained predicate.
+// Without TRIALING here, a user on a free-trial plan could neither cancel
+// nor switch (the category ``is_single`` guard rejects new sub creation).
+const CANCELLABLE_STATUSES = new Set(['ACTIVE', 'TRIALING', 'PAUSED', 'PENDING']);
+function isCancellableStatus(status: string | undefined | null): boolean {
+  return !!status && CANCELLABLE_STATUSES.has(status.toUpperCase());
 }
 
 function formatDate(dateStr: string | null | undefined): string {

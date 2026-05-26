@@ -173,7 +173,7 @@
           data-testid="order-total"
           class="total"
         >
-          <strong>{{ $t('checkout.success.totalLabel') }} ${{ store.orderTotal }}</strong>
+          <strong>{{ $t('checkout.success.totalLabel') }} {{ formattedOrderTotal }}</strong>
         </div>
       </div>
 
@@ -184,9 +184,13 @@
         @valid="handleBillingAddressValid"
       />
 
-      <!-- Step 3: Payment Methods -->
+      <!-- Step 3: Payment Methods. Pass amount + currency so the token-balance
+           method can render its live quote panel (TokenCheckoutQuote) here,
+           matching the public-checkout flow 1-for-1. -->
       <PaymentMethodsBlock
         class="card"
+        :amount="store.orderTotal"
+        :currency="orderCurrency"
         @selected="handlePaymentMethodSelected"
       />
 
@@ -285,7 +289,7 @@
           :disabled="!canCheckout"
           @click="store.submitCheckout"
         >
-          {{ store.submitting ? $t('checkout.submitting') : $t('checkout.payButton', { amount: store.orderTotal }) }}
+          {{ store.submitting ? $t('checkout.submitting') : (payButtonLabelOverride || $t('checkout.payButton', { amount: formattedOrderTotal })) }}
         </button>
       </div>
 
@@ -319,6 +323,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import { formatMoney, payButtonLabelOverride } from 'vbwd-view-component';
 import { useSubscriptionCheckoutStore } from '../stores/checkout';
 import { isAuthenticated as checkAuth } from '@/api';
 import EmailBlock from '@/components/checkout/EmailBlock.vue';
@@ -334,6 +339,21 @@ const store = useSubscriptionCheckoutStore();
 // Auth state
 const isAuthenticated = ref(checkAuth());
 const userEmail = ref(localStorage.getItem('user_email') || '');
+
+// The plan owns the currency; fall back to the first line-item or USD so the
+// token-balance live quote (TokenCheckoutQuote) gets a non-empty currency
+// and the quote endpoint returns a usable rate.
+const orderCurrency = computed<string>(() => {
+  const planCurrency = (store.plan as { currency?: string } | null | undefined)?.currency;
+  const lineItemCurrency = (store.lineItems?.[0] as { currency?: string } | undefined)?.currency;
+  return planCurrency || lineItemCurrency || 'USD';
+});
+
+// Round half-up at the third decimal so the Pay button + Total don't leak
+// IEEE-754 noise like "Pay $39.989999999999995".
+const formattedOrderTotal = computed(() =>
+  formatMoney(Number(store.orderTotal), { currency: orderCurrency.value }),
+);
 
 // Payment method state
 const selectedPaymentMethod = ref<string | null>(null);
