@@ -55,6 +55,25 @@
       "failedToLoad": "加载订阅数据失败",
       "failedToCancel": "取消订阅失败",
       "failedToDownload": "下载发票失败"
+    },
+    "activeSubscriptions": {
+      "title": "活跃订阅",
+      "plan": "方案",
+      "nextPayment": "下次付款",
+      "price": "价格",
+      "noSubscriptions": "您没有活跃的订阅。"
+    },
+    "addons": {
+      "title": "附加组件",
+      "active": "活跃附加组件",
+      "previous": "以前的附加组件",
+      "noActive": "没有活跃的附加组件。",
+      "browse": "浏览附加组件",
+      "name": "名称",
+      "price": "价格",
+      "renews": "续订",
+      "status": "状态",
+      "ended": "已结束"
     }
   },
   "plans": {

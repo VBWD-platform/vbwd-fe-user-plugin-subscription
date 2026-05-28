@@ -55,6 +55,25 @@
       "failedToLoad": "Abonnementdaten konnten nicht geladen werden",
       "failedToCancel": "Abonnement konnte nicht gekündigt werden",
       "failedToDownload": "Rechnung konnte nicht heruntergeladen werden"
+    },
+    "activeSubscriptions": {
+      "title": "Aktive Abonnements",
+      "plan": "Tarif",
+      "nextPayment": "Nächste Zahlung",
+      "price": "Preis",
+      "noSubscriptions": "Sie haben keine aktiven Abonnements."
+    },
+    "addons": {
+      "title": "Add-Ons",
+      "active": "Aktive Add-Ons",
+      "previous": "Frühere Add-Ons",
+      "noActive": "Keine aktiven Add-Ons.",
+      "browse": "Add-Ons durchsuchen",
+      "name": "Name",
+      "price": "Preis",
+      "renews": "Verlängert sich",
+      "status": "Status",
+      "ended": "Beendet"
     }
   },
   "plans": {

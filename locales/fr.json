@@ -55,6 +55,25 @@
       "failedToLoad": "Erreur de chargement des données d'abonnement",
       "failedToCancel": "Erreur lors de l'annulation de l'abonnement",
       "failedToDownload": "Erreur lors du téléchargement de la facture"
+    },
+    "activeSubscriptions": {
+      "title": "Abonnements actifs",
+      "plan": "Plan",
+      "nextPayment": "Prochain paiement",
+      "price": "Prix",
+      "noSubscriptions": "Vous n'avez aucun abonnement actif."
+    },
+    "addons": {
+      "title": "Modules complémentaires",
+      "active": "Modules actifs",
+      "previous": "Anciens modules",
+      "noActive": "Aucun module actif.",
+      "browse": "Parcourir les modules",
+      "name": "Nom",
+      "price": "Prix",
+      "renews": "Renouvelle",
+      "status": "Statut",
+      "ended": "Terminé"
     }
   },
   "plans": {

@@ -55,6 +55,25 @@
       "failedToLoad": "サブスクリプションデータの読み込みに失敗しました",
       "failedToCancel": "サブスクリプションのキャンセルに失敗しました",
       "failedToDownload": "請求書のダウンロードに失敗しました"
+    },
+    "activeSubscriptions": {
+      "title": "有効なサブスクリプション",
+      "plan": "プラン",
+      "nextPayment": "次回のお支払い",
+      "price": "価格",
+      "noSubscriptions": "有効なサブスクリプションはありません。"
+    },
+    "addons": {
+      "title": "アドオン",
+      "active": "有効なアドオン",
+      "previous": "以前のアドオン",
+      "noActive": "有効なアドオンはありません。",
+      "browse": "アドオンを見る",
+      "name": "名前",
+      "price": "価格",
+      "renews": "次回更新",
+      "status": "ステータス",
+      "ended": "終了"
     }
   },
   "plans": {

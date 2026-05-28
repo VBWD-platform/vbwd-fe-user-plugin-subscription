@@ -55,6 +55,25 @@
       "failedToLoad": "Error al cargar datos de suscripción",
       "failedToCancel": "Error al cancelar suscripción",
       "failedToDownload": "Error al descargar factura"
+    },
+    "activeSubscriptions": {
+      "title": "Suscripciones activas",
+      "plan": "Plan",
+      "nextPayment": "Próximo pago",
+      "price": "Precio",
+      "noSubscriptions": "No tiene suscripciones activas."
+    },
+    "addons": {
+      "title": "Complementos",
+      "active": "Complementos activos",
+      "previous": "Complementos anteriores",
+      "noActive": "No tiene complementos activos.",
+      "browse": "Explorar complementos",
+      "name": "Nombre",
+      "price": "Precio",
+      "renews": "Se renueva",
+      "status": "Estado",
+      "ended": "Finalizado"
     }
   },
   "plans": {
