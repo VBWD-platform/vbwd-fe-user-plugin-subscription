@@ -33,6 +33,9 @@ const subscriptionCheckoutSource: CheckoutSource = {
   },
   getLineItems: () => useSubscriptionCheckoutStore().lineItems,
   getOrderTotal: () => useSubscriptionCheckoutStore().orderTotal,
+  getDiscountAmount: () => useSubscriptionCheckoutStore().discountAmount,
+  applyCoupon: (code: string) => useSubscriptionCheckoutStore().applyCoupon(code),
+  clearCoupon: () => useSubscriptionCheckoutStore().clearCoupon(),
   async submit(paymentMethodCode) {
     const store = useSubscriptionCheckoutStore();
     if (paymentMethodCode) store.setPaymentMethod(paymentMethodCode);

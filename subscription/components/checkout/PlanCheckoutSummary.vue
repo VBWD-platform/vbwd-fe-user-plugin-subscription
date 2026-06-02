@@ -13,9 +13,8 @@
     >
       {{ store.plan.description }}
     </p>
-    <div class="total">
-      <strong>{{ $t('checkout.success.totalLabel') }} {{ formattedTotal }}</strong>
-    </div>
+    <!-- The net total (and any discount / savings) is rendered by the checkout
+         view from the agnostic core store — no duplicate total here. -->
   </div>
 </template>
 
@@ -40,9 +39,6 @@ const planPrice = computed(() => Number(store.plan?.price || store.plan?.display
 const planCurrency = computed<string>(() => (store.plan?.currency as string) || 'USD');
 const formattedPlanPrice = computed(() =>
   formatMoney(planPrice.value, { currency: planCurrency.value }),
-);
-const formattedTotal = computed(() =>
-  formatMoney(Number(store.orderTotal), { currency: planCurrency.value }),
 );
 
 function formatBillingPeriod(period?: string): string {

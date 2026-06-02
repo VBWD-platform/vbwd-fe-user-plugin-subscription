@@ -101,6 +101,8 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
   const checkoutResult = ref<CheckoutResult | null>(null);
   const isCartCheckout = ref(false);
   const paymentMethodCode = ref<string | null>(null);
+  const couponCode = ref<string | null>(null);
+  const discountAmount = ref(0);
 
   // Plan derived from the cart's single PLAN item (rich fields kept in metadata,
   // refreshed by loadPlan). The cart item id is the plan slug so it can be
@@ -146,13 +148,15 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
     }))
   );
 
-  // Computed
-  const orderTotal = computed(() => {
+  // Computed — gross (pre-discount) sum, then the net order total.
+  const grossTotal = computed(() => {
     let total = Number(plan.value?.price || plan.value?.display_price || 0);
     total += selectedBundles.value.reduce((sum, b) => sum + Number(b.price), 0);
     total += selectedAddons.value.reduce((sum, a) => sum + Number(a.price), 0);
     return total;
   });
+  // Net total exposed to the agnostic core checkout store (discount subtracted).
+  const orderTotal = computed(() => Math.max(0, grossTotal.value - discountAmount.value));
 
   const lineItems = computed(() => {
     const items: LineItem[] = [];
@@ -333,18 +337,45 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
         payload.payment_method_code = paymentMethodCode.value;
       }
 
+      if (couponCode.value) {
+        payload.coupon_code = couponCode.value;
+      }
+
       const response = await api.post('/user/checkout', payload) as CheckoutResult;
       checkoutResult.value = response;
 
       // Selections live in the cart now, so clear it after any successful
       // checkout — the chosen bundles/add-ons have been purchased.
       cart.clearCart();
+      couponCode.value = null;
+      discountAmount.value = 0;
     } catch (e: unknown) {
       const err = e as { response?: { data?: { error?: string } }; message?: string };
       error.value = err.response?.data?.error || err.message || 'Checkout failed';
     } finally {
       submitting.value = false;
     }
+  }
+
+  async function applyCoupon(code: string): Promise<{ valid: boolean; discountAmount: number; error?: string }> {
+    const response = await api.post('/coupons/validate', {
+      code,
+      cart_total: grossTotal.value,
+      scope: 'SUBSCRIPTION',
+    }) as { valid: boolean; discount_amount?: string; error?: string };
+    if (response.valid) {
+      discountAmount.value = Number(response.discount_amount || 0);
+      couponCode.value = code;
+      return { valid: true, discountAmount: discountAmount.value };
+    }
+    discountAmount.value = 0;
+    couponCode.value = null;
+    return { valid: false, discountAmount: 0, error: response.error };
+  }
+
+  function clearCoupon(): void {
+    discountAmount.value = 0;
+    couponCode.value = null;
   }
 
   function reset() {
@@ -356,6 +387,8 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
     submitting.value = false;
     isCartCheckout.value = false;
     paymentMethodCode.value = null;
+    couponCode.value = null;
+    discountAmount.value = 0;
     // NOTE: the plan + selected bundles/add-ons are intentionally NOT cleared
     // here — they live in the persisted cart so they survive navigation away
     // from the checkout view (Checkout.vue's onUnmounted calls reset()). They are
@@ -376,7 +409,10 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
     checkoutResult,
     isCartCheckout,
     paymentMethodCode,
+    couponCode,
+    discountAmount,
     // Computed
+    grossTotal,
     orderTotal,
     lineItems,
     // Actions
@@ -388,6 +424,8 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
     removeBundle,
     addAddon,
     removeAddon,
+    applyCoupon,
+    clearCoupon,
     submitCheckout,
     reset,
   };

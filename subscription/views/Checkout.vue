@@ -50,10 +50,18 @@
       </div>
 
       <div
+        v-if="store.checkoutResult.invoice.status !== 'PAID'"
         data-testid="payment-required-message"
         class="payment-message"
       >
         {{ $t('checkout.success.paymentRequired') }}
+      </div>
+      <div
+        v-else
+        data-testid="payment-complete-message"
+        class="payment-message payment-message--success"
+      >
+        {{ $t('checkout.success.paymentComplete') }}
       </div>
 
       <!-- Invoice Line Items -->
@@ -169,16 +177,39 @@
           </div>
         </div>
 
+        <CouponInput
+          v-if="hasPayableTotal"
+          class="checkout-coupon"
+          :applied-code="store.couponCode"
+          :error="couponError"
+          :loading="couponLoading"
+          @apply="onApplyCoupon"
+          @clear="onClearCoupon"
+        />
+
         <div
           data-testid="order-total"
           class="total"
         >
-          <strong>{{ $t('checkout.success.totalLabel') }} {{ formattedOrderTotal }}</strong>
+          <strong data-testid="order-total-amount">
+            {{ store.discountAmount > 0
+              ? $t('checkout.orderSummary.finalPrice')
+              : $t('checkout.orderSummary.total') }}
+            {{ formattedOrderTotal }}
+          </strong>
+          <div
+            v-if="store.discountAmount > 0"
+            class="order-saved"
+            data-testid="order-discount"
+          >
+            {{ $t('checkout.orderSummary.youSaved') }} {{ formattedDiscount }}
+          </div>
         </div>
       </div>
 
-      <!-- Step 2: Billing Address -->
+      <!-- Step 2: Billing Address (hidden when there is nothing to pay) -->
       <BillingAddressBlock
+        v-if="hasPayableTotal"
         :readonly="isAuthenticated"
         class="card"
         @valid="handleBillingAddressValid"
@@ -188,6 +219,7 @@
            method can render its live quote panel (TokenCheckoutQuote) here,
            matching the public-checkout flow 1-for-1. -->
       <PaymentMethodsBlock
+        v-if="!isPayZero"
         class="card"
         :amount="store.orderTotal"
         :currency="orderCurrency"
@@ -289,7 +321,7 @@
           :disabled="!canCheckout"
           @click="store.submitCheckout"
         >
-          {{ store.submitting ? $t('checkout.submitting') : (payButtonLabelOverride || $t('checkout.payButton', { amount: formattedOrderTotal })) }}
+          {{ store.submitting ? $t('checkout.submitting') : (isPayZero ? $t('checkout.activateFree') : (payButtonLabelOverride || $t('checkout.payButton', { amount: formattedOrderTotal }))) }}
         </button>
       </div>
 
@@ -323,7 +355,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { formatMoney, payButtonLabelOverride } from 'vbwd-view-component';
+import { formatMoney, isZeroTotal, payButtonLabelOverride, CouponInput } from 'vbwd-view-component';
 import { useSubscriptionCheckoutStore } from '../stores/checkout';
 import { isAuthenticated as checkAuth } from '@/api';
 import EmailBlock from '@/components/checkout/EmailBlock.vue';
@@ -354,6 +386,32 @@ const orderCurrency = computed<string>(() => {
 const formattedOrderTotal = computed(() =>
   formatMoney(Number(store.orderTotal), { currency: orderCurrency.value }),
 );
+
+// Coupon state (view-local error/loading; the store owns code + discount).
+const couponError = ref<string | null>(null);
+const couponLoading = ref(false);
+const formattedDiscount = computed(() =>
+  formatMoney(Number(store.discountAmount), { currency: orderCurrency.value }),
+);
+// Gross (pre-discount) drives coupon-input + billing visibility: an
+// intrinsically free plan has nothing to discount or bill.
+const hasPayableTotal = computed(() => Number(store.grossTotal) > 0);
+// Pay Zero keys off the NET total (what the user actually pays): a plan
+// discounted to zero by a 100% coupon needs no payment method either.
+const isPayZero = computed(() => isZeroTotal(store.orderTotal));
+async function onApplyCoupon(code: string): Promise<void> {
+  couponLoading.value = true;
+  couponError.value = null;
+  const result = await store.applyCoupon(code);
+  if (!result.valid) {
+    couponError.value = result.error || 'Invalid coupon';
+  }
+  couponLoading.value = false;
+}
+function onClearCoupon(): void {
+  store.clearCoupon();
+  couponError.value = null;
+}
 
 // Payment method state
 const selectedPaymentMethod = ref<string | null>(null);
@@ -392,10 +450,12 @@ const handleBillingAddressValid = (isValid: boolean) => {
 };
 
 // Computed: can checkout only if all conditions met
+// Pay Zero: when there's nothing to pay (net total 0) no payment method is
+// required; billing is still collected whenever the plan has a gross price.
 const canCheckout = computed(() =>
   isAuthenticated.value &&
-  selectedPaymentMethod.value &&
-  billingAddressValid.value &&
+  (isPayZero.value || !!selectedPaymentMethod.value) &&
+  (!hasPayableTotal.value || billingAddressValid.value) &&
   termsAccepted.value &&
   !store.submitting
 );
@@ -404,8 +464,8 @@ const canCheckout = computed(() =>
 const missingRequirements = computed(() => {
   const missing: string[] = [];
   if (!isAuthenticated.value) missing.push(t('checkout.requirements.signIn'));
-  if (!billingAddressValid.value) missing.push(t('checkout.requirements.billingAddress'));
-  if (!selectedPaymentMethod.value) missing.push(t('checkout.requirements.paymentMethod'));
+  if (hasPayableTotal.value && !billingAddressValid.value) missing.push(t('checkout.requirements.billingAddress'));
+  if (!isPayZero.value && !selectedPaymentMethod.value) missing.push(t('checkout.requirements.paymentMethod'));
   if (!termsAccepted.value) missing.push(t('checkout.requirements.acceptTerms'));
   return missing;
 });
@@ -600,12 +660,21 @@ h1 {
   background: #fcc;
 }
 
+.checkout-coupon {
+  margin: 16px 0;
+}
 .total {
   margin-top: 15px;
   padding-top: 15px;
   border-top: 2px solid #eee;
   font-size: 1.2rem;
   text-align: right;
+}
+.order-saved {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--vbwd-success, #047857);
 }
 
 /* Options Grid */
