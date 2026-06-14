@@ -33,6 +33,7 @@ const subscriptionCheckoutSource: CheckoutSource = {
   },
   getLineItems: () => useSubscriptionCheckoutStore().lineItems,
   getOrderTotal: () => useSubscriptionCheckoutStore().orderTotal,
+  getTaxBreakdown: () => useSubscriptionCheckoutStore().orderPrice,
   getDiscountAmount: () => useSubscriptionCheckoutStore().discountAmount,
   applyCoupon: (code: string) => useSubscriptionCheckoutStore().applyCoupon(code),
   clearCoupon: () => useSubscriptionCheckoutStore().clearCoupon(),

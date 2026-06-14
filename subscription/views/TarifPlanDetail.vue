@@ -78,7 +78,16 @@
                 <span
                   class="meta-value"
                   data-testid="plan-price"
-                >{{ formatPrice(plan) }}</span>
+                >
+                  <PriceDisplay
+                    :effective-display-mode="plan.effective_display_mode"
+                    :global-mode="plan.prices_display_mode"
+                    :net-amount="plan.net_price ?? plan.display_price ?? 0"
+                    :gross-amount="plan.gross_price ?? plan.display_price ?? 0"
+                    :currency="plan.display_currency || 'USD'"
+                    :account-type="authStore.user?.account_type"
+                  />
+                </span>
               </div>
               <div class="meta-item">
                 <span class="meta-label">Billing Period</span>
@@ -180,6 +189,23 @@
                 </span>
               </div>
             </div>
+
+            <!-- S77 — tags + custom fields from the serialized payload -->
+            <div
+              v-if="(plan.tags && plan.tags.length) || plan.custom_fields"
+              class="plan-section"
+              data-testid="plan-tags-custom-fields"
+            >
+              <TagChips
+                v-if="plan.tags && plan.tags.length"
+                :tags="plan.tags"
+              />
+              <CustomFieldsDisplay
+                v-if="plan.custom_fields"
+                :custom-fields="plan.custom_fields"
+                :field-defs="plan.custom_field_defs"
+              />
+            </div>
           </template>
 
           <component
@@ -214,8 +240,11 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { api } from '@/api';
 import { planDetailTabRegistry, type PlanDetailTab } from '@/utils/planDetailTabRegistry';
+import PriceDisplay from '@/components/PriceDisplay.vue';
+import { TagChips, CustomFieldsDisplay, useAuthStore, type CustomFieldDef } from 'vbwd-view-component';
 
 const router = useRouter();
+const authStore = useAuthStore();
 
 interface PlanCategory {
   id?: string;
@@ -237,6 +266,15 @@ interface Plan {
   categories?: PlanCategory[];
   is_active?: boolean;
   is_recurring?: boolean;
+  // S72.4 netto/brutto display
+  net_price?: number | string;
+  gross_price?: number | string;
+  effective_display_mode?: 'netto' | 'brutto';
+  prices_display_mode?: 'netto' | 'brutto';
+  // S77 — appended by the backend serializer via append_tags_and_custom_fields
+  tags?: string[];
+  custom_fields?: Record<string, unknown>;
+  custom_field_defs?: CustomFieldDef[];
 }
 
 const route = useRoute();
@@ -292,22 +330,6 @@ onMounted(async () => {
     loading.value = false;
   }
 });
-
-function formatPrice(p: Plan): string {
-  const displayPrice = p.display_price;
-  const currency = p.display_currency || 'USD';
-  if (displayPrice !== null && displayPrice !== undefined) {
-    const num = typeof displayPrice === 'string' ? parseFloat(displayPrice) : (displayPrice as number);
-    if (!isNaN(num)) return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(num);
-  }
-  // fallback to price object
-  const priceObj = p.price as { price_decimal?: string; currency_code?: string } | undefined;
-  if (priceObj?.price_decimal) {
-    const num = parseFloat(priceObj.price_decimal);
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: priceObj.currency_code || 'USD' }).format(num);
-  }
-  return '—';
-}
 </script>
 
 <style scoped>

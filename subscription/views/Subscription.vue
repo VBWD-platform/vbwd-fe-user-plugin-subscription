@@ -70,7 +70,16 @@
                   >{{ formatStatus(sub.status) }}</span>
                 </td>
                 <td>{{ formatDate(sub.expires_at) }}</td>
-                <td>{{ formatPrice(sub.plan?.price) }} / {{ sub.plan?.billing_period || 'month' }}</td>
+                <td>
+                  <PriceDisplay
+                    :effective-display-mode="sub.plan?.effective_display_mode"
+                    :global-mode="sub.plan?.prices_display_mode"
+                    :net-amount="planNetAmount(sub.plan)"
+                    :gross-amount="planGrossAmount(sub.plan)"
+                    :currency="sub.plan?.currency || 'USD'"
+                    :account-type="authStore.user?.account_type"
+                  /> / {{ sub.plan?.billing_period || 'month' }}
+                </td>
                 <td
                   class="actions-cell"
                   @click.stop
@@ -501,14 +510,28 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { useSubscriptionStore } from '../stores/subscription';
+import { useAuthStore } from 'vbwd-view-component';
+import { useSubscriptionStore, type Plan } from '../stores/subscription';
 import { useInvoicesStore, type Invoice } from '@/stores/invoices';
 import { api } from '@/api';
+import PriceDisplay from '@/components/PriceDisplay.vue';
 
 const router = useRouter();
 const { t } = useI18n();
+const authStore = useAuthStore();
 const subscriptionStore = useSubscriptionStore();
 const invoicesStore = useInvoicesStore();
+
+// FLAG: the dashboard subscription plan payload carries only the gross ``price``
+// (no net/gross split) — net falls back to the same number. The business-viewer
+// overlay still flips the side via PriceDisplay's accountType.
+function planGrossAmount(plan?: Plan): number {
+  return Number(plan?.gross_price ?? plan?.price ?? 0);
+}
+
+function planNetAmount(plan?: Plan): number {
+  return Number(plan?.net_price ?? plan?.price ?? 0);
+}
 
 const loading = ref(true);
 const error = ref<string | null>(null);

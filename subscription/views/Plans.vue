@@ -127,7 +127,15 @@
           </div>
           <h2>{{ plan.name }}</h2>
           <div class="price">
-            <span class="amount">{{ formatPrice(plan.display_price) }}</span>
+            <PriceDisplay
+              class="amount"
+              :effective-display-mode="plan.effective_display_mode"
+              :global-mode="plan.prices_display_mode"
+              :net-amount="plan.net_price ?? plan.display_price"
+              :gross-amount="plan.gross_price ?? plan.display_price"
+              :currency="plan.display_currency || selectedCurrency"
+              :account-type="authStore.user?.account_type"
+            />
             <span class="period">/{{ formatBillingPeriod(plan.billing_period) }}</span>
           </div>
           <p
@@ -204,7 +212,14 @@
                 >{{ $t('plans.currentPlan') }}</span>
               </td>
               <td class="plan-price-cell">
-                {{ formatPrice(plan.display_price) }}/{{ formatBillingPeriod(plan.billing_period) }}
+                <PriceDisplay
+                  :effective-display-mode="plan.effective_display_mode"
+                  :global-mode="plan.prices_display_mode"
+                  :net-amount="plan.net_price ?? plan.display_price"
+                  :gross-amount="plan.gross_price ?? plan.display_price"
+                  :currency="plan.display_currency || selectedCurrency"
+                  :account-type="authStore.user?.account_type"
+                />/{{ formatBillingPeriod(plan.billing_period) }}
               </td>
               <td>{{ plan.billing_period || '—' }}</td>
               <td>
@@ -265,11 +280,14 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import { useAuthStore } from 'vbwd-view-component';
 import { usePlansStore, type Plan } from '../stores/plans';
 import { useSubscriptionStore } from '../stores/subscription';
+import PriceDisplay from '@/components/PriceDisplay.vue';
 
 const router = useRouter();
 const { t } = useI18n();
+const authStore = useAuthStore();
 const plansStore = usePlansStore();
 const subscriptionStore = useSubscriptionStore();
 
@@ -303,16 +321,6 @@ function viewPlan(plan: Plan): void {
 async function selectPlan(plan: Plan): Promise<void> {
   if (isCurrentPlan(plan.id)) return;
   router.push({ name: 'checkout', params: { planSlug: plan.slug } });
-}
-
-function formatPrice(price: number): string {
-  const currencySymbols: Record<string, string> = {
-    EUR: '\u20AC',
-    USD: '$',
-    GBP: '\u00A3',
-  };
-  const symbol = currencySymbols[selectedCurrency.value] || selectedCurrency.value;
-  return `${symbol}${price.toFixed(2)}`;
 }
 
 function formatBillingPeriod(period?: string): string {

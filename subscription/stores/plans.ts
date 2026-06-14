@@ -14,6 +14,9 @@ export interface Plan {
   tax_amount?: number;
   gross_price?: number;
   tax_rate?: number;
+  // S72.4 netto/brutto display
+  effective_display_mode?: 'netto' | 'brutto';
+  prices_display_mode?: 'netto' | 'brutto';
   // UI helpers
   features?: string[];
   popular?: boolean;

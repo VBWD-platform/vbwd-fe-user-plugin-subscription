@@ -298,6 +298,44 @@ describe('SubscriptionCheckoutStore', () => {
       expect(store.lineItems[0].type).toBe('subscription');
       expect(store.lineItems[1].type).toBe('token_bundle');
     });
+
+    // S93 root cause: the cart `price` for the plan is the GROSS amount (from
+    // the computed Price VO), so the order total equals the plan gross plus any
+    // selected add-ons/bundles. The summary's "Gross" line uses the same
+    // gross_price, so Total === plan-gross + add-ons (no net/gross mixing).
+    it('orderTotal equals the plan GROSS plus selected add-ons (== breakdown gross)', async () => {
+      vi.mocked(api.get).mockResolvedValueOnce({
+        plan: {
+          id: 'plan-uuid-pro',
+          name: 'Pro',
+          slug: 'pro',
+          display_price: 29.99,
+          billing_period: 'MONTHLY',
+          effective_display_mode: 'brutto',
+          prices_display_mode: 'brutto',
+          price: {
+            netto: 29.99,
+            taxes: [{ code: 'VAT_DE', rate: 19, amount: 5.6981 }],
+            brutto: 35.6881,
+            currency: 'EUR',
+          },
+        },
+      });
+      const store = useSubscriptionCheckoutStore();
+      await store.loadPlan('pro');
+
+      // Plan gross alone — the cart price is the gross, matching the summary.
+      expect(store.plan?.price).toBeCloseTo(35.6881, 4);
+      expect(store.plan?.gross_price).toBeCloseTo(35.6881, 4);
+      expect(store.grossTotal).toBeCloseTo(35.6881, 4);
+      expect(store.orderTotal).toBeCloseTo(35.6881, 4);
+
+      // Add the +€15 Priority Support add-on (the invisible-in-summary line).
+      store.addAddon({ id: 'a1', name: 'Priority Support', slug: 'priority-support', description: '', price: 15, currency: 'EUR', billing_period: 'monthly', is_active: true });
+
+      // Total = plan gross + add-on; both are visible in the summary now.
+      expect(store.orderTotal).toBeCloseTo(50.6881, 4);
+    });
   });
 
   describe('setPaymentMethod', () => {
@@ -326,6 +364,72 @@ describe('SubscriptionCheckoutStore', () => {
       // Cart-backed plan + selections persist across reset (navigation).
       expect(store.plan).not.toBeNull();
       expect(store.selectedBundles).toHaveLength(1);
+    });
+  });
+
+  describe('orderPrice (order-level tax aggregation)', () => {
+    function seedPlan(priceObj?: Record<string, unknown>) {
+      cart().addItem({
+        type: 'PLAN',
+        id: 'pro',
+        name: 'Pro',
+        price: 119,
+        metadata: {
+          plan_id: 'p1',
+          slug: 'pro',
+          billing_period: 'MONTHLY',
+          currency: 'EUR',
+          gross_price: 119,
+          net_price: 100,
+          price_obj: priceObj,
+        },
+      });
+    }
+
+    it('is a single tax group for a plan-only order (homogeneous)', () => {
+      const store = useSubscriptionCheckoutStore();
+      seedPlan({ netto: 100, taxes: [{ code: 'VAT_DE', rate: 19, amount: 19 }], brutto: 119, currency: 'EUR' });
+      expect(store.orderPrice.taxes).toHaveLength(1);
+      expect(store.orderPrice.netto).toBe(100);
+      expect(store.orderPrice.brutto).toBe(119);
+      expect(store.orderPrice.taxes[0].amount).toBe(19);
+    });
+
+    it('merges a same-rate add-on into one tax group (homogeneous)', () => {
+      const store = useSubscriptionCheckoutStore();
+      seedPlan({ netto: 100, taxes: [{ code: 'VAT', rate: 19, amount: 19 }], brutto: 119, currency: 'EUR' });
+      store.addAddon({
+        id: 'a1', name: 'Priority', slug: 'priority', description: '', price: 23.8,
+        currency: 'EUR', billing_period: 'monthly', is_active: true,
+        price_obj: { netto: 20, taxes: [{ code: 'VAT', rate: 19, amount: 3.8 }], brutto: 23.8, currency: 'EUR' },
+      });
+      expect(store.orderPrice.taxes).toHaveLength(1);
+      expect(store.orderPrice.taxes[0].amount).toBeCloseTo(22.8, 5);
+      expect(store.orderPrice.netto).toBe(120);
+    });
+
+    it('keeps a different-rate add-on as a separate group (heterogeneous)', () => {
+      const store = useSubscriptionCheckoutStore();
+      seedPlan({ netto: 100, taxes: [{ code: 'VAT', rate: 19, amount: 19 }], brutto: 119, currency: 'EUR' });
+      store.addAddon({
+        id: 'a1', name: 'Reduced', slug: 'reduced', description: '', price: 107,
+        currency: 'EUR', billing_period: 'monthly', is_active: true,
+        price_obj: { netto: 100, taxes: [{ code: 'VAT', rate: 7, amount: 7 }], brutto: 107, currency: 'EUR' },
+      });
+      expect(store.orderPrice.taxes).toHaveLength(2);
+      expect(store.orderPrice.netto).toBe(200);
+    });
+
+    it('falls back to net == gross for an add-on without a price_obj', () => {
+      const store = useSubscriptionCheckoutStore();
+      seedPlan({ netto: 100, taxes: [{ code: 'VAT', rate: 19, amount: 19 }], brutto: 119, currency: 'EUR' });
+      store.addAddon({
+        id: 'a1', name: 'Legacy', slug: 'legacy', description: '', price: 50,
+        currency: 'EUR', billing_period: 'monthly', is_active: true,
+      });
+      expect(store.orderPrice.taxes).toHaveLength(1);
+      expect(store.orderPrice.netto).toBe(150);
+      expect(store.orderPrice.brutto).toBe(169);
     });
   });
 });

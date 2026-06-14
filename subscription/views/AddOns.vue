@@ -86,7 +86,14 @@
               class="addon-price"
               data-testid="addon-price"
             >
-              {{ formatPrice(addon.price) }}
+              <PriceDisplay
+                :effective-display-mode="addon.effective_display_mode"
+                :global-mode="addon.prices_display_mode"
+                :net-amount="addonNetAmount(addon)"
+                :gross-amount="addonGrossAmount(addon)"
+                :currency="addonCurrency(addon)"
+                :account-type="authStore.user?.account_type"
+              />
               <span class="billing-period">/{{ formatBillingPeriod(addon.billing_period) }}</span>
             </div>
             <p
@@ -144,7 +151,14 @@
               class="addon-price"
               data-testid="addon-price"
             >
-              {{ formatPrice(addon.price) }}
+              <PriceDisplay
+                :effective-display-mode="addon.effective_display_mode"
+                :global-mode="addon.prices_display_mode"
+                :net-amount="addonNetAmount(addon)"
+                :gross-amount="addonGrossAmount(addon)"
+                :currency="addonCurrency(addon)"
+                :account-type="authStore.user?.account_type"
+              />
               <span
                 v-if="addon.billing_period"
                 class="billing-period"
@@ -188,7 +202,14 @@ import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/api';
 import { useSubscriptionStore } from '../stores/subscription';
-import { useCartStore, eventBus, AppEvents } from 'vbwd-view-component';
+import { useCartStore, useAuthStore, eventBus, AppEvents } from 'vbwd-view-component';
+import PriceDisplay from '@/components/PriceDisplay.vue';
+
+interface AddOnPriceInfo {
+  net_amount?: number | string;
+  gross_amount?: number | string;
+  price?: { netto: number; brutto: number; currency: string };
+}
 
 interface AddOn {
   id: string;
@@ -204,10 +225,16 @@ interface AddOn {
   conditions?: {
     subscription_parent?: string | null;
   };
+  // S85.2 computed Price block (net / gross / per-tax) emitted by the backend.
+  price_info?: AddOnPriceInfo;
+  // S72.4 netto/brutto display (not present on the add-on payload today).
+  effective_display_mode?: 'netto' | 'brutto';
+  prices_display_mode?: 'netto' | 'brutto';
 }
 
 const { t } = useI18n();
 const cartStore = useCartStore();
+const authStore = useAuthStore();
 
 const allAddons = ref<AddOn[]>([]);
 const loading = ref(false);
@@ -266,12 +293,26 @@ function addToCart(addon: AddOn) {
   });
 }
 
-function formatPrice(price: number | string): string {
-  const numPrice = typeof price === 'string' ? parseFloat(price) : price;
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(numPrice);
+function addonBasePrice(addon: AddOn): number {
+  return typeof addon.price === 'string' ? parseFloat(addon.price) : addon.price;
+}
+
+function addonNetAmount(addon: AddOn): number {
+  const net = addon.price_info?.net_amount;
+  if (net !== undefined && net !== null) return Number(net);
+  // No computed Price block — best-effort: net falls back to the bare price.
+  return addonBasePrice(addon);
+}
+
+function addonGrossAmount(addon: AddOn): number {
+  const gross = addon.price_info?.gross_amount;
+  if (gross !== undefined && gross !== null) return Number(gross);
+  // No computed Price block — best-effort: gross falls back to the bare price.
+  return addonBasePrice(addon);
+}
+
+function addonCurrency(addon: AddOn): string {
+  return addon.price_info?.price?.currency || addon.currency || 'USD';
 }
 
 function formatBillingPeriod(period?: string): string {

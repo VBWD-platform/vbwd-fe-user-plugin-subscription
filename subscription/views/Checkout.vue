@@ -77,11 +77,14 @@
           class="invoice-line-item"
         >
           <span>{{ item.description }}</span>
-          <span>${{ item.total_price }}</span>
+          <span>{{ formatMoney(Number(item.total_price), { currency: invoiceCurrency }) }}</span>
         </div>
-        <div class="total">
-          <strong>{{ $t('checkout.success.totalLabel') }} ${{ store.checkoutResult.invoice.total_amount }}</strong>
-        </div>
+        <!-- S85.4 net / per-rate VAT / gross disclosure from the persisted
+             invoice line tax_breakdown (display-sum only, no recompute). -->
+        <PriceBreakdown
+          class="invoice-breakdown"
+          :price="invoiceBreakdownPrice"
+        />
       </div>
 
       <!-- Navigation Buttons -->
@@ -138,7 +141,15 @@
         >
           <div class="plan-row">
             <span data-testid="plan-name">{{ store.plan.name }}</span>
-            <span data-testid="plan-price">${{ getPlanPrice() }}/{{ formatBillingPeriod(store.plan.billing_period) }}</span>
+            <span data-testid="plan-price">
+              <PriceDisplay
+                :net-amount="planNetAmount"
+                :gross-amount="planGrossAmount"
+                :effective-display-mode="store.plan.effective_display_mode"
+                :global-mode="store.plan.prices_display_mode"
+                :currency="orderCurrency"
+                :account-type="authStore.user?.account_type"
+              />/{{ formatBillingPeriod(store.plan.billing_period) }}</span>
           </div>
           <p
             v-if="store.plan.description"
@@ -146,35 +157,51 @@
           >
             {{ store.plan.description }}
           </p>
+          <!-- Per-rate tax disclosure for the plan line. Shown per-line only in
+               the HETEROGENEOUS case (line items span different rates); the
+               homogeneous single-rate case is covered by the order-level
+               <OrderTaxSummary> before the Total. No tax math here. -->
+          <PriceBreakdown
+            v-if="isHeterogeneous && planPriceVO && planPriceVO.taxes.length > 0"
+            :price="planPriceVO"
+          />
         </div>
 
         <!-- Selected Line Items -->
         <div class="selected-items">
-          <div
+          <template
             v-for="item in store.lineItems"
             :key="`${item.type}-${item.id}`"
-            :data-testid="`line-item-${formatTypeForTestId(item.type)}-${formatItemTestId(item.name)}`"
-            class="line-item-row"
           >
-            <span>{{ item.name }}</span>
-            <span>${{ item.price }}</span>
-            <button
-              v-if="item.type === 'token_bundle'"
-              :data-testid="`remove-token-bundle-${item.token_amount}`"
-              class="btn-remove"
-              @click="store.removeBundle(item.id)"
+            <div
+              :data-testid="`line-item-${formatTypeForTestId(item.type)}-${formatItemTestId(item.name)}`"
+              class="line-item-row"
             >
-              {{ $t('common.remove') }}
-            </button>
-            <button
-              v-if="item.type === 'add_on'"
-              :data-testid="`remove-addon-${formatSlug(item.name)}`"
-              class="btn-remove"
-              @click="store.removeAddon(item.id)"
-            >
-              {{ $t('common.remove') }}
-            </button>
-          </div>
+              <span>{{ item.name }}</span>
+              <span>{{ formatMoney(Number(item.price), { currency: orderCurrency }) }}</span>
+              <button
+                v-if="item.type === 'token_bundle'"
+                :data-testid="`remove-token-bundle-${item.token_amount}`"
+                class="btn-remove"
+                @click="store.removeBundle(item.id)"
+              >
+                {{ $t('common.remove') }}
+              </button>
+              <button
+                v-if="item.type === 'add_on'"
+                :data-testid="`remove-addon-${formatSlug(item.name)}`"
+                class="btn-remove"
+                @click="store.removeAddon(item.id)"
+              >
+                {{ $t('common.remove') }}
+              </button>
+            </div>
+            <PriceBreakdown
+              v-if="isHeterogeneous && lineItemBreakdown(item.id)"
+              :price="lineItemBreakdown(item.id)!"
+              class="line-breakdown"
+            />
+          </template>
         </div>
 
         <CouponInput
@@ -185,6 +212,14 @@
           :loading="couponLoading"
           @apply="onApplyCoupon"
           @clear="onClearCoupon"
+        />
+
+        <!-- Order-level tax breakdown (net / total taxes / brutto) across the
+             plan + bundles + add-ons, just before the Total. -->
+        <OrderTaxSummary
+          v-if="store.orderPrice.taxes.length > 0"
+          :price="store.orderPrice"
+          class="checkout-tax-summary"
         />
 
         <div
@@ -246,7 +281,7 @@
               {{ bundle.name }}
             </div>
             <div class="option-price">
-              ${{ bundle.price }}
+              {{ formatMoney(Number(bundle.price), { currency: orderCurrency }) }}
             </div>
           </div>
         </div>
@@ -275,7 +310,7 @@
               :data-testid="`addon-${formatSlug(addon.name)}-price`"
               class="option-price"
             >
-              ${{ addon.price }}
+              {{ formatMoney(Number(addon.price), { currency: orderCurrency }) }}
             </div>
             <p
               :data-testid="`addon-${formatSlug(addon.name)}-description`"
@@ -355,30 +390,122 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { formatMoney, isZeroTotal, payButtonLabelOverride, CouponInput } from 'vbwd-view-component';
+import { formatMoney, isZeroTotal, payButtonLabelOverride, CouponInput, useAuthStore } from 'vbwd-view-component';
 import { useSubscriptionCheckoutStore } from '../stores/checkout';
+import { useAppConfigStore } from '@/stores/appConfig';
 import { isAuthenticated as checkAuth } from '@/api';
 import EmailBlock from '@/components/checkout/EmailBlock.vue';
 import PaymentMethodsBlock from '@/components/checkout/PaymentMethodsBlock.vue';
 import TermsCheckbox from '@/components/checkout/TermsCheckbox.vue';
 import BillingAddressBlock from '@/components/checkout/BillingAddressBlock.vue';
+import PriceDisplay from '@/components/PriceDisplay.vue';
+import PriceBreakdown from '@/components/PriceBreakdown.vue';
+import OrderTaxSummary from '@/components/OrderTaxSummary.vue';
+import type { PriceVO, PriceTaxVO } from '@/utils/priceDisplay';
+
+// The persisted S85 tax fields on the checkout-result invoice/line items. The
+// store's CheckoutResult types predate these; we read them via a narrow local
+// view rather than widening the agnostic core total handling.
+interface InvoiceLineItemWithTax {
+  tax_breakdown?: PriceTaxVO[];
+}
+interface InvoiceWithTaxTotals {
+  amount?: string;
+  subtotal?: string;
+  tax_amount?: string;
+  total_amount?: string;
+  currency?: string;
+  line_items?: InvoiceLineItemWithTax[];
+}
 
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 const store = useSubscriptionCheckoutStore();
+const authStore = useAuthStore();
+const appConfig = useAppConfigStore();
 
 // Auth state
 const isAuthenticated = ref(checkAuth());
 const userEmail = ref(localStorage.getItem('user_email') || '');
 
-// The plan owns the currency; fall back to the first line-item or USD so the
-// token-balance live quote (TokenCheckoutQuote) gets a non-empty currency
-// and the quote endpoint returns a usable rate.
+// The plan owns the currency; fall back to the first line-item, then the global
+// default currency (S93) — never a hardcoded USD — so the token-balance live
+// quote (TokenCheckoutQuote) gets a non-empty currency and the quote endpoint
+// returns a usable rate.
 const orderCurrency = computed<string>(() => {
-  const planCurrency = (store.plan as { currency?: string } | null | undefined)?.currency;
+  const planCurrency = store.plan?.price_obj?.currency || (store.plan as { currency?: string } | null | undefined)?.currency;
   const lineItemCurrency = (store.lineItems?.[0] as { currency?: string } | undefined)?.currency;
-  return planCurrency || lineItemCurrency || 'USD';
+  return planCurrency || lineItemCurrency || appConfig.defaultCurrency;
+});
+
+// S85.4 — the checkout store carries the computed net/gross split + per-tax
+// Price VO (from /tarif-plans), so the pre-payment summary shows the real
+// net/gross side (business overlay flips it) and the detailed tax breakdown.
+// No tax math here — the amounts come straight from the VO.
+const planGrossFallback = computed(() => Number(store.plan?.price || store.plan?.display_price || 0));
+const planGrossAmount = computed(() => Number(store.plan?.gross_price ?? planGrossFallback.value));
+const planNetAmount = computed(() => Number(store.plan?.net_price ?? planGrossFallback.value));
+const planPriceVO = computed<PriceVO | null>(() => store.plan?.price_obj ?? null);
+
+// Heterogeneous = the order's line items span more than one distinct tax group
+// (decided by the order-level aggregate's tax-array length). Only then do
+// per-line breakdowns render; the homogeneous case shows once at the order level.
+const isHeterogeneous = computed(() => store.orderPrice.taxes.length > 1);
+
+// The preserved per-unit Price VO for a selected bundle/add-on line, keyed by
+// its cart id, so a heterogeneous order can show each line's own breakdown.
+function lineItemBreakdown(id: string): PriceVO | null {
+  const bundle = store.selectedBundles.find((b) => b.id === id);
+  if (bundle?.price_obj && bundle.price_obj.taxes.length > 0) return bundle.price_obj;
+  const addon = store.selectedAddons.find((a) => a.id === id);
+  if (addon?.price_obj && addon.price_obj.taxes.length > 0) return addon.price_obj;
+  return null;
+}
+
+// The currency of the persisted invoice on the success/pending block.
+const invoiceCurrency = computed<string>(
+  () => store.checkoutResult?.invoice?.currency || orderCurrency.value,
+);
+
+// Sum the persisted per-rate tax amounts across all invoice line items, grouped
+// by code+rate, into one line per rate. Purely a display aggregation of values
+// the backend already computed — the FE performs no tax arithmetic.
+function aggregateTaxBreakdown(lineItems?: InvoiceLineItemWithTax[]): PriceTaxVO[] {
+  if (!lineItems?.length) return [];
+  const byRate = new Map<string, PriceTaxVO>();
+  for (const item of lineItems) {
+    for (const tax of item.tax_breakdown ?? []) {
+      const key = `${tax.code}-${tax.rate}`;
+      const existing = byRate.get(key);
+      if (existing) {
+        existing.amount += tax.amount;
+      } else {
+        byRate.set(key, { code: tax.code, name: tax.name, rate: tax.rate, amount: tax.amount });
+      }
+    }
+  }
+  return Array.from(byRate.values());
+}
+
+// Totals-level Price VO built ONLY from the persisted invoice fields (subtotal /
+// tax_amount / total_amount + per-line tax_breakdown). Falls back to a single
+// aggregate tax line for legacy invoices without a per-line breakdown; taxless
+// invoices yield net == gross with no tax lines.
+const invoiceBreakdownPrice = computed<PriceVO>(() => {
+  const invoice = store.checkoutResult?.invoice as InvoiceWithTaxTotals | undefined;
+  const gross = Number(invoice?.total_amount ?? invoice?.amount ?? 0);
+  const net = invoice?.subtotal !== undefined ? Number(invoice.subtotal) : gross;
+  const aggregateTax = invoice?.tax_amount !== undefined ? Number(invoice.tax_amount) : 0;
+
+  const perRate = aggregateTaxBreakdown(invoice?.line_items);
+  const taxes = perRate.length > 0
+    ? perRate
+    : aggregateTax > 0
+      ? [{ code: 'TAX', rate: 0, amount: aggregateTax }]
+      : [];
+
+  return { netto: net, taxes, brutto: gross, currency: invoiceCurrency.value };
 });
 
 // Round half-up at the third decimal so the Pay button + Total don't leak
@@ -491,6 +618,7 @@ watch(() => store.checkoutResult, (result) => {
 });
 
 onMounted(async () => {
+  await appConfig.load();
   const planSlug = route.params.planSlug as string;
   if (planSlug) {
     await store.loadPlan(planSlug);
@@ -503,10 +631,6 @@ onMounted(async () => {
 onUnmounted(() => {
   store.reset();
 });
-
-function getPlanPrice(): number {
-  return store.plan?.price || store.plan?.display_price || 0;
-}
 
 function formatBillingPeriod(period?: string): string {
   if (!period) return t('common.billingPeriods.month');
@@ -662,6 +786,13 @@ h1 {
 
 .checkout-coupon {
   margin: 16px 0;
+}
+.line-breakdown {
+  margin: 2px 0 8px;
+  padding-left: 12px;
+}
+.checkout-tax-summary {
+  margin-top: 12px;
 }
 .total {
   margin-top: 15px;

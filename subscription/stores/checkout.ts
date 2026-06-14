@@ -13,6 +13,8 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { api } from '@/api';
 import { useCartStore } from 'vbwd-view-component';
+import { aggregatePrice } from '@/utils/aggregatePrice';
+import type { PriceVO } from '@/utils/priceDisplay';
 
 export interface Plan {
   id: string;
@@ -24,6 +26,39 @@ export interface Plan {
   price_float?: number;
   currency: string;
   billing_period: string;
+  // S85.4 — the computed net/gross split + display-mode pair carried from
+  // /tarif-plans so the checkout summary shows the tax disclosure and the
+  // correct (business-overlay-aware) side instead of net == gross.
+  net_price?: number;
+  gross_price?: number;
+  effective_display_mode?: 'netto' | 'brutto';
+  prices_display_mode?: 'netto' | 'brutto';
+  price_obj?: { netto: number; taxes: { code: string; rate: number; amount: number }[]; brutto: number; currency: string };
+}
+
+/**
+ * The /tarif-plans/<slug> payload shape relevant to checkout pricing. The
+ * assigned-tax path emits ``price`` (the VO) + ``net_amount``/``gross_amount``;
+ * the country path emits ``net_price``/``gross_price``. Both carry the
+ * display-mode pair.
+ */
+interface PlanDetailResponse {
+  plan?: PlanDetailResponse;
+  id: string;
+  name: string;
+  slug?: string;
+  description?: string;
+  price?: { netto: number; taxes: { code: string; rate: number; amount: number }[]; brutto: number; currency: string };
+  display_price?: number;
+  price_float?: number;
+  currency?: string;
+  billing_period?: string;
+  effective_display_mode?: 'netto' | 'brutto';
+  prices_display_mode?: 'netto' | 'brutto';
+  net_amount?: number | string;
+  gross_amount?: number | string;
+  net_price?: number | string;
+  gross_price?: number | string;
 }
 
 export interface TokenBundle {
@@ -33,6 +68,9 @@ export interface TokenBundle {
   price: number;
   currency: string;
   is_active: boolean;
+  // S85.4 — the computed net/gross/taxes split preserved from /token-bundles so
+  // the bundle contributes its tax to the order-level breakdown (display only).
+  price_obj?: PriceVO;
 }
 
 export interface AddOn {
@@ -44,6 +82,13 @@ export interface AddOn {
   currency: string;
   billing_period: string;
   is_active: boolean;
+  // S85.4 — the computed split preserved from /addons (see TokenBundle.price_obj).
+  price_obj?: PriceVO;
+}
+
+/** The per-item ``price_info`` block on /addons and /token-bundles rows. */
+interface PriceInfo {
+  price?: PriceVO;
 }
 
 export interface LineItem {
@@ -120,6 +165,12 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
       display_price: meta.display_price as number | undefined,
       currency: (meta.currency as string) || 'USD',
       billing_period: (meta.billing_period as string) || 'monthly',
+      // S85.4 — the computed split + display-mode pair preserved from loadPlan.
+      net_price: meta.net_price as number | undefined,
+      gross_price: meta.gross_price as number | undefined,
+      effective_display_mode: meta.effective_display_mode as 'netto' | 'brutto' | undefined,
+      prices_display_mode: meta.prices_display_mode as 'netto' | 'brutto' | undefined,
+      price_obj: meta.price_obj as Plan['price_obj'] | undefined,
     };
   });
 
@@ -132,6 +183,7 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
       price: item.price,
       currency: (item.metadata?.currency as string) || 'USD',
       is_active: true,
+      price_obj: item.metadata?.price_obj as PriceVO | undefined,
     }))
   );
 
@@ -145,6 +197,7 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
       currency: (item.metadata?.currency as string) || 'USD',
       billing_period: (item.metadata?.billing_period as string) || 'monthly',
       is_active: true,
+      price_obj: item.metadata?.price_obj as PriceVO | undefined,
     }))
   );
 
@@ -157,6 +210,41 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
   });
   // Net total exposed to the agnostic core checkout store (discount subtracted).
   const orderTotal = computed(() => Math.max(0, grossTotal.value - discountAmount.value));
+
+  // Order-level tax breakdown across plan + bundles + add-ons, summed via the
+  // shared aggregator. Each item contributes its preserved Price VO (or net ==
+  // gross fallback when none). Display only — no tax math here.
+  const orderCurrency = computed<string>(
+    () => plan.value?.price_obj?.currency || plan.value?.currency || 'USD'
+  );
+  const orderPrice = computed<PriceVO>(() => {
+    const items = [];
+    if (plan.value) {
+      items.push({
+        priceVO: plan.value.price_obj ?? null,
+        grossFallback: Number(plan.value.gross_price ?? plan.value.price ?? 0),
+        quantity: 1,
+        currency: plan.value.currency,
+      });
+    }
+    for (const bundle of selectedBundles.value) {
+      items.push({
+        priceVO: bundle.price_obj ?? null,
+        grossFallback: Number(bundle.price),
+        quantity: 1,
+        currency: bundle.currency,
+      });
+    }
+    for (const addon of selectedAddons.value) {
+      items.push({
+        priceVO: addon.price_obj ?? null,
+        grossFallback: Number(addon.price),
+        quantity: 1,
+        currency: addon.currency,
+      });
+    }
+    return aggregatePrice(items, orderCurrency.value);
+  });
 
   const lineItems = computed(() => {
     const items: LineItem[] = [];
@@ -189,6 +277,12 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
   });
 
   // Actions
+  function toNumber(raw: unknown): number | undefined {
+    if (raw === undefined || raw === null) return undefined;
+    const value = typeof raw === 'string' ? parseFloat(raw) : Number(raw);
+    return Number.isFinite(value) ? value : undefined;
+  }
+
   function normalizePrice(raw: unknown): number {
     if (typeof raw === 'number') return raw;
     if (typeof raw === 'string') return parseFloat(raw) || 0;
@@ -203,10 +297,19 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
     loading.value = true;
     error.value = null;
     try {
-      const response = await api.get(`/tarif-plans/${slug}`) as { plan: Plan } & Plan;
-      const rawPlan = response.plan || response as unknown as Plan;
-      // API may return price as {currency_code, price_decimal} object; normalize to number
-      rawPlan.price = normalizePrice(rawPlan.price_float ?? rawPlan.display_price ?? rawPlan.price);
+      const response = await api.get(`/tarif-plans/${slug}`) as PlanDetailResponse;
+      const rawPlan = (response.plan || response) as unknown as PlanDetailResponse;
+      // S85.4 — the computed Price split lives on the /tarif-plans payload. The
+      // assigned-tax path emits ``price`` (the VO) + net/gross_amount; the
+      // country path emits net/gross_price. Read the VO first, then the amounts,
+      // then fall back to the bare number — the fe never computes tax itself.
+      const priceObj = rawPlan.price;
+      const netPrice = priceObj?.netto ?? toNumber(rawPlan.net_amount ?? rawPlan.net_price);
+      const grossPrice = priceObj?.brutto ?? toNumber(rawPlan.gross_amount ?? rawPlan.gross_price);
+      // The bare cart ``price`` (used for gross-total math) prefers the explicit
+      // gross from the split, then the legacy display price / float fields.
+      const numericPrice =
+        grossPrice ?? normalizePrice(rawPlan.price_float ?? rawPlan.display_price);
       // Mirror the selected plan into the cart as the single PLAN item (replacing
       // any previously chosen plan — you subscribe to one plan at a time). This
       // makes "Select plan" add the plan to the persisted cart icon/popup too.
@@ -215,14 +318,19 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
         type: 'PLAN',
         id: rawPlan.slug || slug,
         name: rawPlan.name,
-        price: Number(rawPlan.price) || 0,
+        price: Number(numericPrice) || 0,
         metadata: {
           plan_id: rawPlan.id,
           slug: rawPlan.slug || slug,
           description: rawPlan.description,
           display_price: rawPlan.display_price,
           billing_period: rawPlan.billing_period,
-          currency: rawPlan.currency,
+          currency: priceObj?.currency ?? rawPlan.currency,
+          net_price: netPrice,
+          gross_price: grossPrice,
+          effective_display_mode: rawPlan.effective_display_mode,
+          prices_display_mode: rawPlan.prices_display_mode,
+          price_obj: priceObj,
         },
       });
     } catch (e: unknown) {
@@ -238,9 +346,18 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
       const [bundlesRes, addonsRes] = await Promise.all([
         api.get('/token-bundles').catch(() => ({ bundles: [] })),
         api.get('/addons').catch(() => ({ addons: [] })),
-      ]) as [{ bundles: TokenBundle[] }, { addons: AddOn[] }];
-      availableBundles.value = (bundlesRes.bundles || []).filter(b => b.is_active);
-      availableAddons.value = (addonsRes.addons || []).filter(a => a.is_active);
+      ]) as [
+        { bundles: Array<TokenBundle & { price_info?: PriceInfo }> },
+        { addons: Array<AddOn & { price_info?: PriceInfo }> },
+      ];
+      // S85.4 — preserve each row's computed Price VO (``price_info.price``) so
+      // the bundle/add-on contributes its tax to the order-level breakdown.
+      availableBundles.value = (bundlesRes.bundles || [])
+        .filter(b => b.is_active)
+        .map(({ price_info, ...bundle }) => ({ ...bundle, price_obj: price_info?.price }));
+      availableAddons.value = (addonsRes.addons || [])
+        .filter(a => a.is_active)
+        .map(({ price_info, ...addon }) => ({ ...addon, price_obj: price_info?.price }));
     } catch {
       // Options are optional, don't fail the checkout
     }
@@ -254,7 +371,11 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
       id: bundle.id,
       name: bundle.name,
       price: Number(bundle.price),
-      metadata: { token_amount: bundle.token_amount, currency: bundle.currency },
+      metadata: {
+        token_amount: bundle.token_amount,
+        currency: bundle.currency,
+        price_obj: bundle.price_obj,
+      },
     });
   }
 
@@ -274,6 +395,7 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
         description: addon.description,
         billing_period: addon.billing_period,
         currency: addon.currency,
+        price_obj: addon.price_obj,
       },
     });
   }
@@ -414,6 +536,7 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
     // Computed
     grossTotal,
     orderTotal,
+    orderPrice,
     lineItems,
     // Actions
     loadPlan,

@@ -57,7 +57,18 @@
         <div class="detail-grid">
           <div class="detail-item">
             <span class="label">{{ $t('addons.detail.price') }}</span>
-            <span class="value">{{ addonSub.addon?.price ? formatPrice(addonSub.addon.price) : '-' }}</span>
+            <span class="value">
+              <PriceDisplay
+                v-if="addonSub.addon?.price !== undefined && addonSub.addon?.price !== null"
+                :effective-display-mode="addonSub.addon.effective_display_mode"
+                :global-mode="addonSub.addon.prices_display_mode"
+                :net-amount="addonNetAmount"
+                :gross-amount="addonGrossAmount"
+                :currency="addonSub.addon.currency || 'USD'"
+                :account-type="authStore.user?.account_type"
+              />
+              <template v-else>-</template>
+            </span>
           </div>
           <div class="detail-item">
             <span class="label">{{ $t('addons.detail.billingPeriod') }}</span>
@@ -173,9 +184,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
+import { useAuthStore } from 'vbwd-view-component';
 import { useSubscriptionStore } from '../stores/subscription';
+import PriceDisplay from '@/components/PriceDisplay.vue';
 
 const route = useRoute();
+const authStore = useAuthStore();
 const subscriptionStore = useSubscriptionStore();
 
 const addonSubId = route.params.id as string;
@@ -197,6 +211,12 @@ interface AddonSubscription {
     description?: string | null;
     price?: string | number;
     billing_period?: string;
+    currency?: string;
+    // S85.2 net/gross split — not present on the add-on-subscription payload today.
+    net_price?: string | number;
+    gross_price?: string | number;
+    effective_display_mode?: 'netto' | 'brutto';
+    prices_display_mode?: 'netto' | 'brutto';
   };
   invoice?: AddonSubInvoice;
 }
@@ -207,6 +227,22 @@ const addonSub = ref<AddonSubscription | null>(null);
 const showCancelConfirm = ref(false);
 const cancelling = ref(false);
 const cancelSuccess = ref(false);
+
+// Best-effort net/gross for the add-on-subscription price: the payload carries
+// only the bare ``price`` (gross) today, so net falls back to the same number
+// (FLAG: no persisted net/gross split for subscribed add-ons). The business
+// overlay still flips the displayed side via PriceDisplay's accountType.
+const addonGrossAmount = computed(() => {
+  const addon = addonSub.value?.addon;
+  const value = addon?.gross_price ?? addon?.price ?? 0;
+  return Number(value);
+});
+
+const addonNetAmount = computed(() => {
+  const addon = addonSub.value?.addon;
+  const value = addon?.net_price ?? addon?.price ?? 0;
+  return Number(value);
+});
 
 const canCancel = computed(() => {
   return addonSub.value &&

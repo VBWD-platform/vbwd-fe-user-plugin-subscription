@@ -16,6 +16,13 @@ export interface Plan {
   billing_period: string;
   description?: string;
   categories?: PlanCategory[];
+  // S85 net/gross split + display mode — not present on the dashboard
+  // subscription plan payload today (FLAG).
+  net_price?: number;
+  gross_price?: number;
+  currency?: string;
+  effective_display_mode?: 'netto' | 'brutto';
+  prices_display_mode?: 'netto' | 'brutto';
 }
 
 export interface Subscription {

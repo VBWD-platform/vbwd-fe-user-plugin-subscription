@@ -69,16 +69,34 @@
             <span class="value">{{ addon.currency }}</span>
           </div>
         </div>
+
+        <!-- S77 — tags + custom fields from the serialized payload (no extra fetch) -->
+        <div
+          v-if="hasTagsOrCustomFields"
+          class="addon-tags-custom-fields"
+          data-testid="addon-tags-custom-fields"
+        >
+          <TagChips
+            v-if="addon.tags && addon.tags.length"
+            :tags="addon.tags"
+          />
+          <CustomFieldsDisplay
+            v-if="addon.custom_fields"
+            :custom-fields="addon.custom_fields"
+            :field-defs="addon.custom_field_defs"
+          />
+        </div>
       </div>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/api';
+import { TagChips, CustomFieldsDisplay, type CustomFieldDef } from 'vbwd-view-component';
 
 interface AddonDetail {
   id: string;
@@ -89,6 +107,10 @@ interface AddonDetail {
   currency?: string;
   billing_period?: string;
   is_active?: boolean;
+  // S77 — appended by the backend serializer via append_tags_and_custom_fields
+  tags?: string[];
+  custom_fields?: Record<string, unknown>;
+  custom_field_defs?: CustomFieldDef[];
 }
 
 const route = useRoute();
@@ -97,6 +119,14 @@ const { t } = useI18n();
 const loading = ref(true);
 const error = ref<string | null>(null);
 const addon = ref<AddonDetail | null>(null);
+
+const hasTagsOrCustomFields = computed(() => {
+  const current = addon.value;
+  if (!current) return false;
+  const hasTags = Array.isArray(current.tags) && current.tags.length > 0;
+  const hasFields = !!current.custom_fields && Object.keys(current.custom_fields).length > 0;
+  return hasTags || hasFields;
+});
 
 onMounted(async () => {
   loading.value = true;
