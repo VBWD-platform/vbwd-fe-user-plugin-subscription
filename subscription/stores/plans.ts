@@ -38,7 +38,7 @@ export const usePlansStore = defineStore('plans', {
   }),
 
   actions: {
-    async fetchPlans(currency?: string, country?: string) {
+    async fetchPlans(currency?: string, country?: string, category?: string) {
       this.loading = true;
       this.error = null;
 
@@ -46,6 +46,7 @@ export const usePlansStore = defineStore('plans', {
         const params = new URLSearchParams();
         if (currency) params.append('currency', currency);
         if (country) params.append('country', country);
+        if (category) params.append('category', category);
 
         const url = params.toString() ? `/tarif-plans?${params}` : '/tarif-plans';
         const response = await api.get(url) as PlansResponse;

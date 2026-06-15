@@ -158,6 +158,20 @@ export const subscriptionPlugin: IPlugin = {
     // Register the subscription checkout source so the generic public /checkout
     // page can purchase plans without core knowing about subscriptions.
     checkoutSourceRegistry.register(subscriptionCheckoutSource);
+
+    // Register the TariffPlanCollection as a CMS `vue-component` widget so a CMS
+    // editor can drop a searchable/sortable plan collection into a layout. Soft
+    // dependency: if the CMS plugin is absent the registry import fails
+    // harmlessly and the rest of the subscription plugin works unchanged.
+    import('../cms/src/registry/vueComponentRegistry')
+      .then(({ registerCmsVueComponent }) => {
+        import('./subscription/components/widgets/TariffPlanCollection.vue').then((module) => {
+          registerCmsVueComponent('TariffPlanCollection', module.default);
+        });
+      })
+      .catch(() => {
+        // CMS plugin not installed — skip widget registration.
+      });
   },
 
   activate() {

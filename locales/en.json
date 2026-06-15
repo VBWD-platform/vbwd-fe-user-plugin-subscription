@@ -92,7 +92,8 @@
       "billingPeriod": "Billing",
       "status": "Status",
       "actions": "Actions"
-    }
+    },
+    "sortByPrice": "Sort by price"
   },
   "addons": {
     "breadcrumbPlans": "Plans",
