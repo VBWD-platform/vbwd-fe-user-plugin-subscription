@@ -13,6 +13,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { api } from '@/api';
 import { useCartStore } from 'vbwd-view-component';
+import { useAppConfigStore } from '@/stores/appConfig';
 import { aggregatePrice } from '@/utils/aggregatePrice';
 import type { PriceVO } from '@/utils/priceDisplay';
 
@@ -99,6 +100,10 @@ export interface LineItem {
   description?: string;
   total_price?: string;
   token_amount?: number;
+  // S99.2 — each line carries its own resolved currency so the agnostic core
+  // checkout store (which reads lineItems[0].currency) resolves the SAME
+  // currency the lines render in — the fix for the $/€ line-vs-Total mismatch.
+  currency?: string;
 }
 
 export interface CheckoutResult {
@@ -136,6 +141,9 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
   // logout/login, and stay in sync with the cart icon/popup — no separate
   // ephemeral copy to drift or lose.
   const cart = useCartStore();
+  // The billing currency (the `default_currency` core setting, S84/S99) — the
+  // last-resort currency when an item carries none. Never a hardcoded literal.
+  const appConfig = useAppConfigStore();
 
   // State
   const availableBundles = ref<TokenBundle[]>([]);
@@ -163,7 +171,7 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
       description: meta.description as string | undefined,
       price: item.price,
       display_price: meta.display_price as number | undefined,
-      currency: (meta.currency as string) || 'USD',
+      currency: (meta.currency as string) || appConfig.defaultCurrency,
       billing_period: (meta.billing_period as string) || 'monthly',
       // S85.4 — the computed split + display-mode pair preserved from loadPlan.
       net_price: meta.net_price as number | undefined,
@@ -181,7 +189,7 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
       name: item.name,
       token_amount: (item.metadata?.token_amount as number) || 0,
       price: item.price,
-      currency: (item.metadata?.currency as string) || 'USD',
+      currency: (item.metadata?.currency as string) || appConfig.defaultCurrency,
       is_active: true,
       price_obj: item.metadata?.price_obj as PriceVO | undefined,
     }))
@@ -194,7 +202,7 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
       slug: (item.metadata?.slug as string) || item.name.toLowerCase().replace(/\s+/g, '-'),
       description: (item.metadata?.description as string) || '',
       price: item.price,
-      currency: (item.metadata?.currency as string) || 'USD',
+      currency: (item.metadata?.currency as string) || appConfig.defaultCurrency,
       billing_period: (item.metadata?.billing_period as string) || 'monthly',
       is_active: true,
       price_obj: item.metadata?.price_obj as PriceVO | undefined,
@@ -214,8 +222,11 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
   // Order-level tax breakdown across plan + bundles + add-ons, summed via the
   // shared aggregator. Each item contributes its preserved Price VO (or net ==
   // gross fallback when none). Display only — no tax math here.
+  // Resolve order: the value's own currency (plan VO → plan), else the billing
+  // default. The selectedBundles/selectedAddons resolve to the same default when
+  // they carry none, so every line and the Total share one currency (S99.2).
   const orderCurrency = computed<string>(
-    () => plan.value?.price_obj?.currency || plan.value?.currency || 'USD'
+    () => plan.value?.price_obj?.currency || plan.value?.currency || appConfig.defaultCurrency
   );
   const orderPrice = computed<PriceVO>(() => {
     const items = [];
@@ -254,6 +265,7 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
         id: plan.value.id,
         name: plan.value.name,
         price: plan.value.price || plan.value.display_price || 0,
+        currency: plan.value.price_obj?.currency || plan.value.currency,
       });
     }
     selectedBundles.value.forEach((b) => {
@@ -263,6 +275,7 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
         name: b.name,
         price: b.price,
         token_amount: b.token_amount,
+        currency: b.price_obj?.currency || b.currency,
       });
     });
     selectedAddons.value.forEach((a) => {
@@ -271,6 +284,7 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
         id: a.id,
         name: a.name,
         price: a.price,
+        currency: a.price_obj?.currency || a.currency,
       });
     });
     return items;
@@ -536,6 +550,7 @@ export const useSubscriptionCheckoutStore = defineStore('subscription-checkout',
     // Computed
     grossTotal,
     orderTotal,
+    orderCurrency,
     orderPrice,
     lineItems,
     // Actions

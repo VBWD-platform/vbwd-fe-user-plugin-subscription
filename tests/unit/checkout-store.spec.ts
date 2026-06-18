@@ -338,6 +338,57 @@ describe('SubscriptionCheckoutStore', () => {
     });
   });
 
+  // S99.2 regression — the reported $/€ bug: token-bundle lines rendered in one
+  // currency while the order Total showed another. The fix makes every line item
+  // carry its own resolved currency and resolves orderCurrency from the same
+  // rule (own currency → billing default), never a hardcoded 'USD'.
+  describe('currency resolution (S99.2 — one currency across lines + Total)', () => {
+    it('orderCurrency falls back to the billing default (EUR), not USD, when no item carries one', () => {
+      const store = useSubscriptionCheckoutStore();
+      // A bundle whose cart metadata carries no currency.
+      cart().addItem({ type: 'TOKEN_BUNDLE', id: 'b1', name: '1000 Tokens', price: 10, metadata: { token_amount: 1000 } });
+
+      expect(store.orderCurrency).toBe('EUR');
+    });
+
+    it('orderCurrency uses the plan/item own currency when present', async () => {
+      vi.mocked(api.get).mockResolvedValueOnce({
+        plan: {
+          id: 'p1', name: 'Pro', slug: 'pro', display_price: 29, billing_period: 'MONTHLY',
+          price: { netto: 29, taxes: [], brutto: 29, currency: 'USD' },
+        },
+      });
+      const store = useSubscriptionCheckoutStore();
+      await store.loadPlan('pro');
+
+      expect(store.orderCurrency).toBe('USD');
+    });
+
+    it('every line item carries the resolved currency so the core Total matches the lines', () => {
+      const store = useSubscriptionCheckoutStore();
+      // Bundles + add-on with NO own currency — they must inherit the billing
+      // currency (EUR), the same one the order Total resolves to, so the visible
+      // lines and the Total never disagree.
+      cart().addItem({ type: 'TOKEN_BUNDLE', id: 'b1', name: '1000 Tokens', price: 10, metadata: { token_amount: 1000 } });
+      cart().addItem({ type: 'ADD_ON', id: 'a1', name: 'Support', price: 15, metadata: { slug: 'support' } });
+
+      const lineCurrencies = store.lineItems.map((line) => line.currency);
+      // The core checkout store resolves currency from lineItems[0].currency.
+      expect(lineCurrencies.every((code) => code === store.orderCurrency)).toBe(true);
+      expect(store.lineItems[0].currency).toBe('EUR');
+    });
+
+    it('line items keep an item own currency over the billing default', () => {
+      const store = useSubscriptionCheckoutStore();
+      cart().addItem({ type: 'TOKEN_BUNDLE', id: 'b1', name: '1000 Tokens', price: 10, metadata: { token_amount: 1000, currency: 'USD' } });
+
+      // The order currency resolves from the plan, here absent → billing default;
+      // the bundle's own line currency reflects its metadata.
+      const bundleLine = store.lineItems.find((line) => line.type === 'token_bundle');
+      expect(bundleLine?.currency).toBe('USD');
+    });
+  });
+
   describe('setPaymentMethod', () => {
     it('sets the payment method code', () => {
       const store = useSubscriptionCheckoutStore();

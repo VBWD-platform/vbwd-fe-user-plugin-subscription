@@ -128,6 +128,7 @@
           <h2>{{ plan.name }}</h2>
           <div class="price">
             <PriceDisplay
+              convert-to-display
               class="amount"
               :effective-display-mode="plan.effective_display_mode"
               :global-mode="plan.prices_display_mode"
@@ -213,6 +214,7 @@
               </td>
               <td class="plan-price-cell">
                 <PriceDisplay
+                  convert-to-display
                   :effective-display-mode="plan.effective_display_mode"
                   :global-mode="plan.prices_display_mode"
                   :net-amount="plan.net_price ?? plan.display_price"

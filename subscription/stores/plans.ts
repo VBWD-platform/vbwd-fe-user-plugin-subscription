@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { api } from '@/api';
+import { useAppConfigStore } from '@/stores/appConfig';
 
 export interface Plan {
   id: string;
@@ -32,7 +33,8 @@ export const usePlansStore = defineStore('plans', {
   state: () => ({
     plans: [] as Plan[],
     selectedPlan: null as Plan | null,
-    currency: 'EUR',
+    // Seed with the billing default (S99) — the API response overrides it.
+    currency: useAppConfigStore().defaultCurrency,
     loading: false,
     error: null as string | null
   }),
@@ -52,7 +54,7 @@ export const usePlansStore = defineStore('plans', {
         const response = await api.get(url) as PlansResponse;
 
         this.plans = response.plans || [];
-        this.currency = response.currency || 'EUR';
+        this.currency = response.currency || useAppConfigStore().defaultCurrency;
         return response;
       } catch (error) {
         this.error = (error as Error).message || 'Failed to fetch plans';

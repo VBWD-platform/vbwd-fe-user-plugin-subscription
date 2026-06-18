@@ -7,6 +7,7 @@
       <span data-testid="plan-name">{{ store.plan.name }}</span>
       <span data-testid="plan-price">
         <PriceDisplay
+          convert-to-display
           :net-amount="planNetAmount"
           :gross-amount="planGrossAmount"
           :effective-display-mode="store.plan.effective_display_mode"
@@ -28,6 +29,7 @@
          duplicate. -->
     <PriceBreakdown
       v-if="isHeterogeneous && planPriceVO && planPriceVO.taxes.length > 0"
+      convert-to-display
       :price="planPriceVO"
     />
 
@@ -43,10 +45,11 @@
         data-testid="summary-token-bundle"
       >
         <span>{{ bundle.name }}</span>
-        <span>{{ formatMoney(Number(bundle.price), { currency }) }}</span>
+        <span>{{ formatInDisplay(Number(bundle.price), currency) }}</span>
       </div>
       <PriceBreakdown
         v-if="isHeterogeneous && bundle.price_obj && bundle.price_obj.taxes.length > 0"
+        convert-to-display
         :price="bundle.price_obj"
         class="line-breakdown"
       />
@@ -60,10 +63,11 @@
         data-testid="summary-add-on"
       >
         <span>{{ addon.name }}</span>
-        <span>{{ formatMoney(Number(addon.price), { currency }) }}</span>
+        <span>{{ formatInDisplay(Number(addon.price), currency) }}</span>
       </div>
       <PriceBreakdown
         v-if="isHeterogeneous && addon.price_obj && addon.price_obj.taxes.length > 0"
+        convert-to-display
         :price="addon.price_obj"
         class="line-breakdown"
       />
@@ -81,9 +85,10 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useAuthStore, formatMoney } from 'vbwd-view-component';
+import { useAuthStore } from 'vbwd-view-component';
 import { useSubscriptionCheckoutStore } from '../../stores/checkout';
 import { useAppConfigStore } from '@/stores/appConfig';
+import { useDisplayPrice } from '@/composables/useDisplayPrice';
 import PriceDisplay from '@/components/PriceDisplay.vue';
 import PriceBreakdown from '@/components/PriceBreakdown.vue';
 
@@ -91,6 +96,7 @@ const { t } = useI18n();
 const store = useSubscriptionCheckoutStore();
 const authStore = useAuthStore();
 const appConfig = useAppConfigStore();
+const { formatInDisplay } = useDisplayPrice();
 
 // S85.4 — the checkout store now carries the computed net/gross split + the
 // per-tax Price VO (from /tarif-plans), so we feed the real net/gross to

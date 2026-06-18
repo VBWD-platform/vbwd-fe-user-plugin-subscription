@@ -60,11 +60,12 @@
             <span class="value">
               <PriceDisplay
                 v-if="addonSub.addon?.price !== undefined && addonSub.addon?.price !== null"
+                convert-to-display
                 :effective-display-mode="addonSub.addon.effective_display_mode"
                 :global-mode="addonSub.addon.prices_display_mode"
                 :net-amount="addonNetAmount"
                 :gross-amount="addonGrossAmount"
-                :currency="addonSub.addon.currency || 'USD'"
+                :currency="addonSub.addon.currency || appConfig.defaultCurrency"
                 :account-type="authStore.user?.account_type"
               />
               <template v-else>-</template>
@@ -117,7 +118,7 @@
             </div>
             <div class="detail-item">
               <span class="label">{{ $t('addons.detail.price') }}</span>
-              <span class="value">{{ formatPrice(addonSub.invoice.amount) }} {{ addonSub.invoice.currency }}</span>
+              <span class="value">{{ formatPrice(addonSub.invoice.amount, addonSub.invoice.currency) }}</span>
             </div>
           </div>
         </div>
@@ -184,13 +185,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { useAuthStore } from 'vbwd-view-component';
+import { useAuthStore, formatMoney } from 'vbwd-view-component';
 import { useSubscriptionStore } from '../stores/subscription';
+import { useAppConfigStore } from '@/stores/appConfig';
 import PriceDisplay from '@/components/PriceDisplay.vue';
 
 const route = useRoute();
 const authStore = useAuthStore();
 const subscriptionStore = useSubscriptionStore();
+const appConfig = useAppConfigStore();
 
 const addonSubId = route.params.id as string;
 
@@ -294,13 +297,11 @@ function formatDate(dateStr: string | null | undefined): string {
   }
 }
 
-function formatPrice(amount: string | number | null | undefined): string {
+function formatPrice(amount: string | number | null | undefined, currency?: string): string {
   if (amount === null || amount === undefined) return '-';
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(num);
+  // Resolve: the value's own currency, else the operating currency (S99).
+  return formatMoney(num, { currency });
 }
 
 onMounted(() => {

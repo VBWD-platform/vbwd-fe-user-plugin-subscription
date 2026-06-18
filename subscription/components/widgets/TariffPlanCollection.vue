@@ -59,6 +59,7 @@
           <h3>{{ plan.name }}</h3>
           <div class="tariff-plan-card__price">
             <PriceDisplay
+              convert-to-display
               :effective-display-mode="plan.effective_display_mode"
               :global-mode="plan.prices_display_mode"
               :net-amount="plan.net_price ?? plan.display_price"
@@ -111,6 +112,7 @@
               <td>{{ plan.name }}</td>
               <td>
                 <PriceDisplay
+                  convert-to-display
                   :effective-display-mode="plan.effective_display_mode"
                   :global-mode="plan.prices_display_mode"
                   :net-amount="plan.net_price ?? plan.display_price"
@@ -199,7 +201,10 @@ const collection = useCollectionView<Plan>({
 });
 
 function selectPlan(plan: Plan): void {
-  router.push({ name: 'checkout', params: { planSlug: plan.slug } });
+  // Public widget: route to the PUBLIC checkout (?tarif_plan_id=…), never the
+  // dashboard checkout (/dashboard/checkout/:planSlug), which is reserved for
+  // logged-in in-dashboard purchases.
+  router.push({ name: 'checkout-public', query: { tarif_plan_id: plan.slug } });
 }
 
 function formatBillingPeriod(period?: string): string {

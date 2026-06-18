@@ -80,11 +80,12 @@
                   data-testid="plan-price"
                 >
                   <PriceDisplay
+                    convert-to-display
                     :effective-display-mode="plan.effective_display_mode"
                     :global-mode="plan.prices_display_mode"
                     :net-amount="plan.net_price ?? plan.display_price ?? 0"
                     :gross-amount="plan.gross_price ?? plan.display_price ?? 0"
-                    :currency="plan.display_currency || 'USD'"
+                    :currency="plan.display_currency || appConfig.defaultCurrency"
                     :account-type="authStore.user?.account_type"
                   />
                 </span>
@@ -240,11 +241,13 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { api } from '@/api';
 import { planDetailTabRegistry, type PlanDetailTab } from '@/utils/planDetailTabRegistry';
+import { useAppConfigStore } from '@/stores/appConfig';
 import PriceDisplay from '@/components/PriceDisplay.vue';
 import { TagChips, CustomFieldsDisplay, useAuthStore, type CustomFieldDef } from 'vbwd-view-component';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const appConfig = useAppConfigStore();
 
 interface PlanCategory {
   id?: string;

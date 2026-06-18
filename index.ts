@@ -23,7 +23,13 @@ import zh from './locales/zh.json';
  */
 const subscriptionCheckoutSource: CheckoutSource = {
   id: 'subscription',
-  matches: (ctx) => !!ctx.planSlug || ctx.cartType === 'subscription',
+  // Matches a plan checkout (?tarif_plan_id=…), the bot draft cart
+  // (cartType === 'subscription'), or an explicit subscription-domain cart
+  // (?source=subscription) — the latter lets a token-bundle-only cart (no plan
+  // slug) check out on the public page, since this source also renders cart
+  // token bundles / add-ons.
+  matches: (ctx) =>
+    !!ctx.planSlug || ctx.cartType === 'subscription' || ctx.source === 'subscription',
   async load(ctx) {
     const store = useSubscriptionCheckoutStore();
     if (ctx.planSlug) {

@@ -76,7 +76,7 @@
                     :global-mode="sub.plan?.prices_display_mode"
                     :net-amount="planNetAmount(sub.plan)"
                     :gross-amount="planGrossAmount(sub.plan)"
-                    :currency="sub.plan?.currency || 'USD'"
+                    :currency="sub.plan?.currency || appConfig.defaultCurrency"
                     :account-type="authStore.user?.account_type"
                   /> / {{ sub.plan?.billing_period || 'month' }}
                 </td>
@@ -334,7 +334,7 @@
                 </td>
                 <td>{{ formatDate(invoice.invoiced_at) }}</td>
                 <td class="invoice-amount">
-                  {{ formatPrice(invoice.amount) }}
+                  {{ formatPrice(invoice.amount, invoice.currency) }}
                 </td>
                 <td>
                   <span
@@ -467,7 +467,7 @@
           </div>
           <div class="detail-row">
             <span class="label">{{ $t('subscription.invoiceModal.amount') }}</span>
-            <span class="value amount">{{ formatPrice(selectedInvoice.amount) }}</span>
+            <span class="value amount">{{ formatPrice(selectedInvoice.amount, selectedInvoice.currency) }}</span>
           </div>
         </div>
         <div class="modal-actions">
@@ -510,9 +510,10 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { useAuthStore } from 'vbwd-view-component';
+import { useAuthStore, formatMoney } from 'vbwd-view-component';
 import { useSubscriptionStore, type Plan } from '../stores/subscription';
 import { useInvoicesStore, type Invoice } from '@/stores/invoices';
+import { useAppConfigStore } from '@/stores/appConfig';
 import { api } from '@/api';
 import PriceDisplay from '@/components/PriceDisplay.vue';
 
@@ -521,6 +522,7 @@ const { t } = useI18n();
 const authStore = useAuthStore();
 const subscriptionStore = useSubscriptionStore();
 const invoicesStore = useInvoicesStore();
+const appConfig = useAppConfigStore();
 
 // FLAG: the dashboard subscription plan payload carries only the gross ``price``
 // (no net/gross split) — net falls back to the same number. The business-viewer
@@ -736,13 +738,11 @@ function formatDate(dateStr: string | null | undefined): string {
   }
 }
 
-function formatPrice(amount: string | number | null | undefined): string {
+function formatPrice(amount: string | number | null | undefined, currency?: string): string {
   if (amount === null || amount === undefined) return '-';
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(num);
+  // Resolve: the value's own currency, else the operating currency (S99).
+  return formatMoney(num, { currency });
 }
 
 function formatNumber(num: number): string {

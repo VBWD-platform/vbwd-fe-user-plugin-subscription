@@ -109,10 +109,15 @@ describe('TariffPlanCollection widget', () => {
     expect(wrapper.find('[data-testid="tariff-plan-table"]').exists()).toBe(true);
   });
 
-  it('pushes to checkout with the plan slug when a plan is selected', async () => {
+  it('pushes to the PUBLIC checkout with the plan slug when a plan is selected', async () => {
     const wrapper = await mountWidget({});
     await wrapper.get('[data-testid="select-plan-gamma"]').trigger('click');
-    expect(routerPush).toHaveBeenCalledWith({ name: 'checkout', params: { planSlug: 'gamma' } });
+    // Public widget → public checkout (?tarif_plan_id=…), never the dashboard
+    // checkout route (/dashboard/checkout/:planSlug).
+    expect(routerPush).toHaveBeenCalledWith({
+      name: 'checkout-public',
+      query: { tarif_plan_id: 'gamma' },
+    });
   });
 
   it('keeps only the configured slugs in slugs mode', async () => {

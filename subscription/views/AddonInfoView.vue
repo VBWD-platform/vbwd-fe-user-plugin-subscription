@@ -55,7 +55,7 @@
         <div class="detail-grid">
           <div class="detail-item">
             <span class="label">{{ $t('addonInfo.price') }}</span>
-            <span class="value">{{ formatPrice(addon.price) }}</span>
+            <span class="value">{{ formatPrice(addon.price, addon.currency) }}</span>
           </div>
           <div class="detail-item">
             <span class="label">{{ $t('addonInfo.billingPeriod') }}</span>
@@ -96,7 +96,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/api';
-import { TagChips, CustomFieldsDisplay, type CustomFieldDef } from 'vbwd-view-component';
+import { TagChips, CustomFieldsDisplay, formatMoney, type CustomFieldDef } from 'vbwd-view-component';
 
 interface AddonDetail {
   id: string;
@@ -143,13 +143,11 @@ onMounted(async () => {
   }
 });
 
-function formatPrice(price: string | number | null | undefined): string {
+function formatPrice(price: string | number | null | undefined, currency?: string): string {
   if (price === null || price === undefined) return '-';
   const num = typeof price === 'string' ? parseFloat(price) : price;
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(num);
+  // Resolve: the value's own currency, else the operating currency (S99).
+  return formatMoney(num, { currency });
 }
 </script>
 

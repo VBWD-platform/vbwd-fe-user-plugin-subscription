@@ -61,7 +61,7 @@
         <div class="detail-grid">
           <div class="detail-item">
             <span class="label">{{ $t('planDetail.price') }}</span>
-            <span class="value">{{ formatPrice(plan.display_price || plan.price) }}</span>
+            <span class="value">{{ formatPrice(plan.display_price || plan.price, plan.display_currency) }}</span>
           </div>
           <div class="detail-item">
             <span class="label">{{ $t('planDetail.billingPeriod') }}</span>
@@ -93,6 +93,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import { formatMoney } from 'vbwd-view-component';
 import { api } from '@/api';
 
 interface PlanDetail {
@@ -130,13 +131,11 @@ onMounted(async () => {
   }
 });
 
-function formatPrice(price: number | string | null | undefined): string {
+function formatPrice(price: number | string | null | undefined, currency?: string): string {
   if (price === null || price === undefined) return '-';
   const num = typeof price === 'string' ? parseFloat(price) : price;
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(num);
+  // Resolve: the value's own currency, else the operating currency (S99).
+  return formatMoney(num, { currency });
 }
 </script>
 

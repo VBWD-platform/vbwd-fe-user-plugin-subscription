@@ -87,6 +87,7 @@
               data-testid="addon-price"
             >
               <PriceDisplay
+                convert-to-display
                 :effective-display-mode="addon.effective_display_mode"
                 :global-mode="addon.prices_display_mode"
                 :net-amount="addonNetAmount(addon)"
@@ -152,6 +153,7 @@
               data-testid="addon-price"
             >
               <PriceDisplay
+                convert-to-display
                 :effective-display-mode="addon.effective_display_mode"
                 :global-mode="addon.prices_display_mode"
                 :net-amount="addonNetAmount(addon)"
@@ -203,6 +205,7 @@ import { useI18n } from 'vue-i18n';
 import { api } from '@/api';
 import { useSubscriptionStore } from '../stores/subscription';
 import { useCartStore, useAuthStore, eventBus, AppEvents } from 'vbwd-view-component';
+import { useAppConfigStore } from '@/stores/appConfig';
 import PriceDisplay from '@/components/PriceDisplay.vue';
 
 interface AddOnPriceInfo {
@@ -241,6 +244,7 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 
 const subscriptionStore = useSubscriptionStore();
+const appConfig = useAppConfigStore();
 
 const hasActiveSubscription = computed(() => {
   return subscriptionStore.subscription?.status === 'ACTIVE';
@@ -312,7 +316,8 @@ function addonGrossAmount(addon: AddOn): number {
 }
 
 function addonCurrency(addon: AddOn): string {
-  return addon.price_info?.price?.currency || addon.currency || 'USD';
+  // Resolve: the addon's own currency, else the billing default (S99).
+  return addon.price_info?.price?.currency || addon.currency || appConfig.defaultCurrency;
 }
 
 function formatBillingPeriod(period?: string): string {
