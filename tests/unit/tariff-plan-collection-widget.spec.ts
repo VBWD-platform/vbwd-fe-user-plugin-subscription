@@ -6,7 +6,7 @@
  * (``{ ...widget.config, widget_slug }``) the CmsWidgetRenderer passes, fetches
  * plans through the subscription plans store, and pushes to checkout on select.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
 import { createI18n } from 'vue-i18n';
@@ -79,6 +79,12 @@ describe('TariffPlanCollection widget', () => {
     vi.clearAllMocks();
   });
 
+  afterEach(() => {
+    document
+      .querySelectorAll('[data-tariff-plan-collection-css]')
+      .forEach((el) => el.remove());
+  });
+
   it('renders plan cards from fetched data, sorted by ascending net price', async () => {
     const wrapper = await mountWidget({});
     expect(cardSlugs(wrapper)).toEqual(['gamma', 'beta', 'alpha']);
@@ -132,5 +138,24 @@ describe('TariffPlanCollection widget', () => {
     const callArgs = (plansStore.fetchPlans as unknown as { mock: { calls: unknown[][] } }).mock.calls[0];
     expect(callArgs).toContain('pro-plans');
     expect(cardSlugs(wrapper).length).toBe(3);
+  });
+
+  it('injects the admin CSS-tab override (config.css) into <head>', async () => {
+    await mountWidget({ css: '.tariff-plan-collection { background: rebeccapurple; }' });
+    const styleEl = document.head.querySelector('[data-tariff-plan-collection-css]');
+    expect(styleEl).not.toBeNull();
+    expect(styleEl!.textContent).toContain('rebeccapurple');
+  });
+
+  it('injects nothing when config.css is empty', async () => {
+    await mountWidget({});
+    expect(document.head.querySelector('[data-tariff-plan-collection-css]')).toBeNull();
+  });
+
+  it('removes its injected style on unmount', async () => {
+    const wrapper = await mountWidget({ css: '.tariff-plan-collection { color: red; }' });
+    expect(document.head.querySelector('[data-tariff-plan-collection-css]')).not.toBeNull();
+    wrapper.unmount();
+    expect(document.head.querySelector('[data-tariff-plan-collection-css]')).toBeNull();
   });
 });

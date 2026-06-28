@@ -151,7 +151,7 @@
  * ``useCollectionView`` + ``CollectionToolbar`` for the search/sort/view logic
  * (DRY). Selecting a plan routes to checkout, mirroring Plans.vue.
  */
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from 'vbwd-view-component';
@@ -168,6 +168,7 @@ interface TariffPlanCollectionConfig {
   plan_slugs?: string[];
   default_view?: 'cards' | 'table';
   heading?: string;
+  css?: string;
 }
 
 const props = defineProps<{ config: TariffPlanCollectionConfig }>();
@@ -227,6 +228,23 @@ onMounted(async () => {
     // Error surfaced through the store.
   }
 });
+
+// Admin "CSS" tab override (config.css) — injected into <head> so it can target
+// the widget's classes, mirroring NativePricingPlans / ContactForm. Without this
+// the CSS tab is inert (CSS saved but never applied).
+let styleEl: HTMLStyleElement | null = null;
+function applyCss(): void {
+  if (styleEl) { styleEl.remove(); styleEl = null; }
+  const css = props.config.css;
+  if (!css) return;
+  styleEl = document.createElement('style');
+  styleEl.setAttribute('data-tariff-plan-collection-css', '');
+  styleEl.textContent = css;
+  document.head.appendChild(styleEl);
+}
+onMounted(applyCss);
+watch(() => props.config.css, applyCss);
+onUnmounted(() => { if (styleEl) { styleEl.remove(); styleEl = null; } });
 </script>
 
 <style scoped>
