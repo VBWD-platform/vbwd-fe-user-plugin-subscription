@@ -58,7 +58,7 @@ const subscriptionCheckoutSource: CheckoutSource = {
 
 export const subscriptionPlugin: IPlugin = {
   name: 'subscription',
-  version: '1.0.0',
+  version: '26.6',
   description: 'Subscription management — plans, subscriptions, add-ons, checkout',
 
   install(sdk: IPlatformSDK) {
