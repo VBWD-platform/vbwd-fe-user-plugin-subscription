@@ -143,12 +143,14 @@ export const subscriptionPlugin: IPlugin = {
     userNavRegistry.register({
       pluginName: 'subscription',
       to: '/dashboard/subscription',
+      icon: 'repeat',
       labelKey: 'nav.subscription',
       testId: 'nav-subscription',
     });
     userNavRegistry.register({
       pluginName: 'subscription',
       to: '/dashboard/plans',
+      icon: 'layers',
       labelKey: 'nav.plans',
       testId: 'nav-plans',
       group: 'store',
@@ -156,6 +158,7 @@ export const subscriptionPlugin: IPlugin = {
     userNavRegistry.register({
       pluginName: 'subscription',
       to: '/dashboard/add-ons',
+      icon: 'plus-square',
       labelKey: 'nav.addons',
       testId: 'nav-addons',
       group: 'store',
