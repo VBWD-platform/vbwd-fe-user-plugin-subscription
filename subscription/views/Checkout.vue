@@ -396,6 +396,7 @@ import { useAppConfigStore } from '@/stores/appConfig';
 import { isAuthenticated as checkAuth } from '@/api';
 import EmailBlock from '@/components/checkout/EmailBlock.vue';
 import PaymentMethodsBlock from '@/components/checkout/PaymentMethodsBlock.vue';
+import { getCheckoutPaymentMethod } from '@/registries/checkoutPaymentMethods';
 import TermsCheckbox from '@/components/checkout/TermsCheckbox.vue';
 import BillingAddressBlock from '@/components/checkout/BillingAddressBlock.vue';
 import PriceDisplay from '@/components/PriceDisplay.vue';
@@ -598,7 +599,29 @@ const missingRequirements = computed(() => {
 });
 
 // Redirect to payment provider when checkout succeeds
-watch(() => store.checkoutResult, (result) => {
+watch(() => store.checkoutResult, async (result) => {
+  // In-band payment methods (e.g. token balance) finish the charge here so the
+  // inline success panel can show PAID — mirroring the public checkout, which
+  // runs the registered ``instantPay`` hook before landing on confirmation.
+  // Without this the token-paid invoice would stay PENDING on this page and
+  // the vendor sale would never be attributed.
+  const entry = store.paymentMethodCode
+    ? getCheckoutPaymentMethod(store.paymentMethodCode)
+    : undefined;
+  if (result && entry?.instantPay) {
+    const invoiceId = result.invoice?.id;
+    if (invoiceId) {
+      try {
+        await entry.instantPay(invoiceId);
+        if (store.checkoutResult?.invoice) {
+          store.checkoutResult.invoice.status = 'PAID';
+        }
+      } catch (err) {
+        console.warn('[subscription-checkout] instantPay failed', err);
+      }
+    }
+    return;
+  }
   if (result && store.paymentMethodCode === 'stripe') {
     const invoiceId = result.invoice?.id;
     if (invoiceId) {
