@@ -78,6 +78,7 @@
   },
   "plans": {
     "title": "Sélectionner un Plan",
+    "subtitle": "Choisissez le forfait qui vous convient le mieux",
     "loading": "Chargement des plans...",
     "noPlans": "Aucun plan disponible pour le moment.",
     "mostPopular": "Populaire",

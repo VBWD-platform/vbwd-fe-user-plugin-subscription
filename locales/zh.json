@@ -78,6 +78,7 @@
   },
   "plans": {
     "title": "选择计划",
+    "subtitle": "选择最适合您的方案",
     "loading": "加载计划中...",
     "noPlans": "目前没有可用的计划。",
     "mostPopular": "最受欢迎",

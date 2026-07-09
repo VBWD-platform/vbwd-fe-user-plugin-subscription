@@ -78,6 +78,7 @@
   },
   "plans": {
     "title": "Tarif auswählen",
+    "subtitle": "Wählen Sie den Tarif, der am besten zu Ihnen passt",
     "loading": "Tarife werden geladen...",
     "noPlans": "Derzeit sind keine Tarife verfügbar.",
     "mostPopular": "Beliebtester Tarif",
