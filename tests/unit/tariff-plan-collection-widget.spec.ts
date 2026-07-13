@@ -126,6 +126,16 @@ describe('TariffPlanCollection widget', () => {
     });
   });
 
+  it('routes to the DASHBOARD checkout when checkout_target = dashboard', async () => {
+    const wrapper = await mountWidget({ checkout_target: 'dashboard' });
+    await wrapper.get('[data-testid="select-plan-gamma"]').trigger('click');
+    // Dashboard host (Plans.vue) → in-dashboard checkout (/dashboard/checkout/:planSlug).
+    expect(routerPush).toHaveBeenCalledWith({
+      name: 'checkout',
+      params: { planSlug: 'gamma' },
+    });
+  });
+
   it('keeps only the configured slugs in slugs mode', async () => {
     const wrapper = await mountWidget({ source_mode: 'slugs', plan_slugs: ['beta', 'gamma'] });
     expect(cardSlugs(wrapper).sort()).toEqual(['beta', 'gamma']);

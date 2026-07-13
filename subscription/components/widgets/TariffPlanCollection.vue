@@ -217,6 +217,10 @@ interface TariffPlanCollectionConfig {
   component_name?: string;
   widget_slug?: string;
   source_mode?: 'category' | 'slugs';
+  // Where the "select plan" button routes. Absent/'public' → the public
+  // checkout (?tarif_plan_id=…); 'dashboard' → the in-dashboard checkout
+  // (/dashboard/checkout/:planSlug), used when the widget hosts /dashboard/plans.
+  checkout_target?: 'public' | 'dashboard';
   category?: string;
   plan_slugs?: string[];
   default_view?: 'cards' | 'table';
@@ -290,9 +294,13 @@ const collection = useCollectionView<Plan>({
 });
 
 function selectPlan(plan: Plan): void {
-  // Public widget: route to the PUBLIC checkout (?tarif_plan_id=…), never the
-  // dashboard checkout (/dashboard/checkout/:planSlug), which is reserved for
-  // logged-in in-dashboard purchases.
+  // Default (public) widget: route to the PUBLIC checkout (?tarif_plan_id=…).
+  // When hosted on the logged-in dashboard (checkout_target = 'dashboard'),
+  // route to the in-dashboard checkout (/dashboard/checkout/:planSlug) instead.
+  if (props.config.checkout_target === 'dashboard') {
+    router.push({ name: 'checkout', params: { planSlug: plan.slug } });
+    return;
+  }
   router.push({ name: 'checkout-public', query: { tarif_plan_id: plan.slug } });
 }
 
