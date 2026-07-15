@@ -7,8 +7,12 @@
  *   - reads ``dashboard_plans_widget_slug`` from the subscription config,
  *   - when set, fetches that widget (``GET /cms/widgets/by-slug/<slug>``) and
  *     renders the widget with the merged config + ``checkout_target: 'dashboard'``,
- *   - on empty slug OR any fetch error, falls back to ``{ checkout_target:
- *     'dashboard' }`` so the widget's default "all plans" mode is shown.
+ *   - when the widget lookup 404s (the slug is a tarif-plan CATEGORY slug, not a
+ *     widget slug), resolves category mode ``{ source_mode: 'category',
+ *     category: <slug>, checkout_target: 'dashboard' }`` so the category renders
+ *     directly (no silent all-plans fallback for a set slug),
+ *   - on empty slug, a config-fetch error, OR a NON-404 widget-fetch error,
+ *     falls back to ``{ checkout_target: 'dashboard' }`` (the "all plans" mode).
  *
  * The TariffPlanCollection child is stubbed so we can inspect the ``config``
  * prop the host resolves — no store/i18n wiring needed here.
@@ -104,13 +108,33 @@ describe('Plans.vue widget host', () => {
     expect(mockedGet).toHaveBeenCalledWith('/subscription/config');
   });
 
-  it('falls back to the all-plans config when the widget fetch rejects (404)', async () => {
+  it('resolves category mode when the widget lookup 404s (slug is a tarif-plan category slug)', async () => {
+    mockedGet.mockImplementation(async (url: string) => {
+      if (url === '/subscription/config') {
+        return { dashboard_plans_widget_slug: 'subscription-plans' };
+      }
+      if (url === '/cms/widgets/by-slug/subscription-plans') {
+        throw Object.assign(new Error('Not Found'), { status: 404 });
+      }
+      throw new Error(`unexpected url ${url}`);
+    });
+
+    const wrapper = await mountPlans();
+
+    expect(widgetConfig(wrapper)).toEqual({
+      source_mode: 'category',
+      category: 'subscription-plans',
+      checkout_target: 'dashboard',
+    });
+  });
+
+  it('falls back to the all-plans config when the widget fetch rejects with a non-404 error', async () => {
     mockedGet.mockImplementation(async (url: string) => {
       if (url === '/subscription/config') {
         return { dashboard_plans_widget_slug: 'missing' };
       }
       if (url === '/cms/widgets/by-slug/missing') {
-        throw new Error('Request failed with status code 404');
+        throw Object.assign(new Error('Server error'), { status: 500 });
       }
       throw new Error(`unexpected url ${url}`);
     });
@@ -118,6 +142,7 @@ describe('Plans.vue widget host', () => {
     const wrapper = await mountPlans();
 
     expect(widgetConfig(wrapper)).toEqual({ checkout_target: 'dashboard' });
+    expect(widgetConfig(wrapper).source_mode).toBeUndefined();
   });
 
   it('falls back to the all-plans config when the config fetch itself rejects', async () => {

@@ -26,8 +26,12 @@
  *      (``GET /api/v1/subscription/config``),
  *   2. if a slug is set, fetch that widget (``GET /cms/widgets/by-slug/<slug>``)
  *      and render it with its own config merged in,
- *   3. on empty slug OR any fetch failure (e.g. 404), fall back to the widget's
- *      default "all plans" mode.
+ *   3. if the widget lookup 404s, treat the slug as a tarif-plan CATEGORY slug
+ *      and render category mode directly (an operator can naturally paste a
+ *      category slug here; a definitive 404 means it is not a widget slug, so we
+ *      resolve the category instead of silently showing all plans),
+ *   4. on empty slug, a config-fetch failure, OR a NON-404 widget-fetch failure
+ *      (network/5xx), fall back to the widget's default "all plans" mode.
  *
  * In every branch the resolved config carries ``checkout_target: 'dashboard'``
  * so the widget routes "select plan" to the in-dashboard checkout. We only make
@@ -56,6 +60,14 @@ const resolvedConfig = ref<ResolvedWidgetConfig | null>(null);
 // every plan via the widget's default category mode (preserves prior behaviour).
 const FALLBACK_CONFIG: ResolvedWidgetConfig = { checkout_target: 'dashboard' };
 
+const HTTP_NOT_FOUND = 404;
+
+// The api client throws an ApiError whose numeric ``status`` is set. We detect
+// it structurally (not via an imported class, which the package may not export).
+function isNotFoundError(error: unknown): boolean {
+  return (error as { status?: number })?.status === HTTP_NOT_FOUND;
+}
+
 async function resolveWidgetConfig(): Promise<ResolvedWidgetConfig> {
   let slug = '';
   try {
@@ -76,7 +88,13 @@ async function resolveWidgetConfig(): Promise<ResolvedWidgetConfig> {
       widget_slug: widget.slug,
       checkout_target: 'dashboard',
     };
-  } catch {
+  } catch (error) {
+    // A definitive 404 means the slug is not a CMS widget — treat it as a
+    // tarif-plan category slug and render that category directly. Any other
+    // failure (network/5xx) is unsafe to interpret, so fall back to all plans.
+    if (isNotFoundError(error)) {
+      return { source_mode: 'category', category: slug, checkout_target: 'dashboard' };
+    }
     return FALLBACK_CONFIG;
   }
 }
