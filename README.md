@@ -91,3 +91,12 @@ E2E_BASE_URL=http://localhost:8080 npx playwright test vue/tests/e2e/cart-checko
 
 TDD-first · SOLID · DRY · clean code · **no overengineering**. Gate:
 `bin/pre-commit-check.sh --full` green on the repo.
+
+## Documentation
+
+Full platform documentation lives at **[vbwd.cc/docs](https://vbwd.cc/docs)**.
+
+- [Frontend plugins](https://vbwd.cc/docs-frontend-plugins) — how fe-admin / fe-user plugins are built and mounted
+- [Subscriptions](https://vbwd.cc/docs-core-subscription) — documentation for this plugin's domain
+- [Architecture](https://vbwd.cc/docs-architecture) — platform layering and the core-agnosticism rule
+- [Getting started](https://vbwd.cc/docs-getting-started) — install a VBWD instance and enable plugins
