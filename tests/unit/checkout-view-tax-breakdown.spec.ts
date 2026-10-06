@@ -304,3 +304,52 @@ describe('Checkout.vue post-payment success block', () => {
     expect(taxLines.length).toBe(0);
   });
 });
+
+describe('Checkout.vue success block subscription status (backend enum casing)', () => {
+  beforeEach(() => {
+    shared.accountType = null;
+    setActivePinia(createPinia());
+  });
+
+  function withSubscriptionStatus(subscriptionStatus: string) {
+    const store = useSubscriptionCheckoutStore();
+    store.checkoutResult = {
+      subscription: { id: 'sub-1', status: subscriptionStatus },
+      invoice: {
+        id: 'inv-1',
+        invoice_number: 'INV-001',
+        status: 'PENDING',
+        amount: '11.89',
+        total_amount: '11.89',
+        currency: 'EUR',
+        line_items: [],
+      },
+      message: 'ok',
+    } as never;
+  }
+
+  // The backend serialises SubscriptionStatus.PENDING.value === "PENDING".
+  it.each(['PENDING', 'pending'])('labels a %s subscription as pending', async (subscriptionStatus) => {
+    withSubscriptionStatus(subscriptionStatus);
+    const wrapper = mountCheckout();
+    await nextTick();
+    expect(wrapper.find('[data-testid="subscription-status"]').text()).toBe('checkout.success.statusPending');
+  });
+
+  it('labels an ACTIVE subscription as active', async () => {
+    withSubscriptionStatus('ACTIVE');
+    const wrapper = mountCheckout();
+    await nextTick();
+    expect(wrapper.find('[data-testid="subscription-status"]').text()).toBe('checkout.success.statusActive');
+  });
+
+  it('shows payment-required for a PENDING invoice and payment-complete for a paid one', async () => {
+    withSubscriptionStatus('PENDING');
+    const wrapper = mountCheckout();
+    await nextTick();
+    expect(wrapper.find('[data-testid="payment-required-message"]').exists()).toBe(true);
+    useSubscriptionCheckoutStore().checkoutResult!.invoice.status = 'paid';
+    await nextTick();
+    expect(wrapper.find('[data-testid="payment-complete-message"]').exists()).toBe(true);
+  });
+});

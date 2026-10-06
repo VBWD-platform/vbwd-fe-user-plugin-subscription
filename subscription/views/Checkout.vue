@@ -41,7 +41,7 @@
         >
           {{ $t('checkout.success.subscriptionStatus') }}
           <span data-testid="subscription-status">
-            {{ store.checkoutResult.subscription.status === 'pending' ? $t('checkout.success.statusPending') : $t('checkout.success.statusActive') }}
+            {{ hasStatus(store.checkoutResult.subscription.status, 'PENDING') ? $t('checkout.success.statusPending') : $t('checkout.success.statusActive') }}
           </span>
         </p>
         <p data-testid="invoice-number">
@@ -50,7 +50,7 @@
       </div>
 
       <div
-        v-if="store.checkoutResult.invoice.status !== 'PAID'"
+        v-if="!hasStatus(store.checkoutResult.invoice.status, 'PAID')"
         data-testid="payment-required-message"
         class="payment-message"
       >
@@ -392,6 +392,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { formatMoney, isZeroTotal, payButtonLabelOverride, CouponInput, useAuthStore } from 'vbwd-view-component';
 import { useSubscriptionCheckoutStore } from '../stores/checkout';
+import { hasStatus } from '../utils/subscriptionStatus';
 import { useAppConfigStore } from '@/stores/appConfig';
 import { isAuthenticated as checkAuth } from '@/api';
 import EmailBlock from '@/components/checkout/EmailBlock.vue';
