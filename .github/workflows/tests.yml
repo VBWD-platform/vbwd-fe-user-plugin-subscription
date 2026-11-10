@@ -27,6 +27,21 @@ jobs:
       - name: Overlay plugin source
         run: cp -r plugin-src/. vbwd-fe-user/plugins/subscription/
 
+      # subscription lazily imports the cms plugin (../cms/src/... — the
+      # widget registry and the SEO head helper used by the S154 public plan
+      # pages). The host checkout ships no cms plugin, so overlay it as a peer
+      # (same pattern as cms-youtube).
+      - name: Checkout cms peer
+        uses: actions/checkout@v4
+        with:
+          repository: VBWD-platform/vbwd-fe-user-plugin-cms
+          path: peer-cms
+
+      - name: Overlay peers
+        run: |
+          mkdir -p vbwd-fe-user/plugins/cms
+          cp -r peer-cms/. vbwd-fe-user/plugins/cms/
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
