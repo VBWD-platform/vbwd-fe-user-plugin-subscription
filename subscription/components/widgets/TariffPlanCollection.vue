@@ -212,6 +212,7 @@ import { usePlansStore, type Plan } from '../../stores/plans';
 import { useCollectionView } from '@/composables/useCollectionView';
 import CollectionToolbar from '@/components/CollectionToolbar.vue';
 import PriceDisplay from '@/components/PriceDisplay.vue';
+import { formatBillingPeriod as formatPeriodLabel } from '../../utils/billingPeriod';
 
 interface TariffPlanCollectionConfig {
   component_name?: string;
@@ -305,14 +306,7 @@ function selectPlan(plan: Plan): void {
 }
 
 function formatBillingPeriod(period?: string): string {
-  if (!period) return t('common.billingPeriods.month');
-  const periodMap: Record<string, string> = {
-    monthly: t('common.billingPeriods.month'),
-    yearly: t('common.billingPeriods.year'),
-    annual: t('common.billingPeriods.year'),
-    weekly: t('common.billingPeriods.week'),
-  };
-  return periodMap[period.toLowerCase()] || period;
+  return formatPeriodLabel(period, t);
 }
 
 onMounted(async () => {

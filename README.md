@@ -69,6 +69,14 @@ plugins/subscription/
   store as a `CheckoutSource { matches, load, getLineItems, getOrderTotal,
   submit, reset, summaryComponent }` so the agnostic core checkout store can
   drive it on `/checkout` without knowing about subscriptions.
+- **Public plan pages (S154 D10)**: `install()` reads `plans_slug` and
+  `seo_index_tarif_plans` from `GET /api/v1/subscription/config` (fallback
+  `/plans`) into `subscription/publicPlans.ts`, then mounts `PublicPlans.vue`
+  at `/<plans_slug>` and `PublicPlanDetail.vue` at `/<plans_slug>/:planSlug`
+  (public, `noLayout`). Each sets its SEO head (title, description, canonical,
+  robots, og) through the cms `injectSeoMeta` seam, a soft dependency. The CTA
+  goes to `/dashboard/checkout/<slug>`. A changed `plans_slug` applies on the
+  next fe-user load.
 - **Stores** (Pinia): `useSubscriptionCheckoutStore` (id `subscription-checkout`),
   `usePlansStore` (id `plans`), `useSubscriptionStore` (id `subscription`).
 - **i18n**: the plugin owns its translations and registers them with

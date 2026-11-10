@@ -6,7 +6,13 @@ import {
   type CheckoutSource,
   type CheckoutResult,
 } from '@/registries/checkoutSourceRegistry';
+import { api } from '@/api';
 import { useSubscriptionCheckoutStore } from './subscription/stores/checkout';
+import {
+  publicPlansBase,
+  setPublicPlansConfig,
+  type PublicPlansConfig,
+} from './subscription/publicPlans';
 import en from './locales/en.json';
 import de from './locales/de.json';
 import es from './locales/es.json';
@@ -61,7 +67,7 @@ export const subscriptionPlugin: IPlugin = {
   version: '26.6.1',
   description: 'Subscription management — plans, subscriptions, add-ons, checkout',
 
-  install(sdk: IPlatformSDK) {
+  async install(sdk: IPlatformSDK) {
     // i18n — the subscription plugin owns its translations (nav labels +
     // subscription/plans/addons/addonInfo/planDetail content). Moved out of
     // core locales (Sprint 07).
@@ -73,6 +79,29 @@ export const subscriptionPlugin: IPlugin = {
     sdk.addTranslations('ru', ru);
     sdk.addTranslations('th', th);
     sdk.addTranslations('zh', zh);
+
+    // S154 D10 — public, indexable plan pages under the operator-configurable
+    // base (`plans_slug`), read from the backend single source of truth like
+    // ghrm's catalogue base. A failed fetch keeps the `/plans` default —
+    // install() must never throw or the app fails to boot.
+    try {
+      setPublicPlansConfig((await api.get('/subscription/config')) as PublicPlansConfig);
+    } catch {
+      setPublicPlansConfig({});
+    }
+    const plansBase = publicPlansBase();
+    sdk.addRoute({
+      path: plansBase,
+      name: 'public-plans',
+      component: () => import('./subscription/views/PublicPlans.vue'),
+      meta: { requiresAuth: false, noLayout: true },
+    });
+    sdk.addRoute({
+      path: `${plansBase}/:planSlug`,
+      name: 'public-plan-detail',
+      component: () => import('./subscription/views/PublicPlanDetail.vue'),
+      meta: { requiresAuth: false, noLayout: true },
+    });
 
     // Routes
     sdk.addRoute({
